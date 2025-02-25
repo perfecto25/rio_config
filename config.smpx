@@ -1,0 +1,17 @@
+@template server_base
+  mtu 9000
+  tso true
+  ports [ [80, 443], [8080, 8443] ]
+
+nic eth0
+  @use server_base
+  ip [ 192.168.1.10, 192.168.1.11 ]
+  name "Primary NIC"
+
+nic eth1
+  ip 192.168.1.12
+
+app webserver
+  host ${WEB_HOST:-localhost}
+  port 8080
+  routes [ [GET, /api], [POST, /submit] ]
