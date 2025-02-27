@@ -1,8 +1,12 @@
+#!/bin/python3
 import os
 import re
 import json
 
+
 class SimplexParser:
+#    __slots__ = ("filename")
+
     def __init__(self):
         self.config = {}
         self.templates = {}
@@ -55,6 +59,10 @@ class SimplexParser:
         return value
 
     def parse(self, filename):
+
+        # import pdb
+        # pdb.set_trace()
+
         in_template = False
         with open(filename, 'r') as f:
             for line in f:
@@ -79,25 +87,31 @@ class SimplexParser:
                         self.current_subgroup.update(self.templates[value])
                         print(f"Applied template {value} to subgroup: {self.current_subgroup}")
                 elif not in_template and len(parts) == 2 and not key.startswith('@') and ' ' not in value.strip():  # Group/subgroup
+                    print("[A]")
                     group, subgroup = parts
+                    print(f"xx parts {parts}")
+                    print(f"self cfg {self.config}")
                     self.current_group = self.config.setdefault(group, {})
                     self.current_subgroup = self.current_group.setdefault(subgroup, {})
-                    print(f"Set group: {group}, subgroup: {subgroup}, config: {self.config}")
+                    print(f"[A] Set group: {group}, subgroup: {subgroup}, config: {self.config}")
                 elif value:  # Key-value pair
+                    print("[B]")
                     if self.current_subgroup is not None:
+                        print("[B1]")
                         self.current_subgroup[key] = self.parse_value(value)
-                        print(f"Set {key} = {self.current_subgroup[key]} in subgroup: {self.current_subgroup}")
+                        print(f"[B2] Set {key} = {self.current_subgroup[key]} in subgroup: {self.current_subgroup}")
                     elif self.current_group is not None:
+                        print("B3")
                         self.current_group[key] = self.parse_value(value)
-                        print(f"Set {key} = {self.current_group[key]} in group: {self.current_group}")
+                        print(f"B3 Set {key} = {self.current_group[key]} in group: {self.current_group}")
                     else:
                         self.config[key] = self.parse_value(value)
-                        print(f"Set {key} = {self.config[key]} in root: {self.config}")
+                        print(f"B4 Set {key} = {self.config[key]} in root: {self.config}")
                 else:
                     in_template = False
                     self.current_group = self.config.setdefault(key, {})
                     self.current_subgroup = None
-                    print(f"Set group: {key}, config: {self.config}")
+                    print(f"[C] Set group: {key}, config: {self.config}")
 
     def get_config(self):
         print("Final config:", self.config)
@@ -106,5 +120,5 @@ class SimplexParser:
 
 # Test
 parser = SimplexParser()
-parser.parse('config.smpx')
+parser.parse('config2.smpx')
 print(json.dumps(parser.get_config(), indent=2))
