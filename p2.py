@@ -5,6 +5,8 @@ import json
 import re
 import copy
 
+# import pdb
+
 
 def parse_scm(config_text):
     config = {}
@@ -23,6 +25,9 @@ def parse_scm(config_text):
         if section_match:
             section_name = section_match.group(1)
             instance_id = section_match.group(2)
+
+            print(f"section name {section_name}")
+            print(f"section match {section_match}")
             apply_template = None
 
             if section_name.startswith('@template'):
@@ -46,11 +51,13 @@ def parse_scm(config_text):
             template_name = line[4:].strip()
             if template_name in templates and current_section is not None:
                 template_config = copy.deepcopy(templates[template_name])
+                print(f"template config {template_config}")
                 instance_config = substitute_instance(template_config, current_section.get('__instance_id', ''))
                 current_section.update(instance_config)
             continue
 
         if '=' in line and current_section is not None:
+            print(f"current_section {current_section}")
             key, value = [part.strip() for part in line.split('=', 1)]
             target = current_section
             keys = key.split('.')
@@ -98,9 +105,18 @@ def parse_value(value):
                 hash_dict[k] = parse_value(v)  # Recursively parse value
         return hash_dict if hash_dict else value
 
+    print(f"--- {value}")
+
+    # check if theres a comment on the line
+    comment = False
+    if not all([value.startswith('"'),  value.endswith('"')]):    
+        comment = True if "#" in value else False
+
     # Handle JSON-like list syntax
+    print(f"- Comment {comment}")
     if value.startswith('[') and value.endswith(']'):
         items = value[1:-1].split(',')
+        print(f"--1-- {items}")
         return [parse_value(item.strip()) for item in items if item.strip()]
 
     # Handle space-separated list syntax
@@ -142,38 +158,14 @@ def replace_shell_vars(obj):
     return obj
 
 
-# Example usage
 if __name__ == "__main__":
-    config_text = """
-    
-    [@template mynode]
-    host = "node$INSTANCE.$DOMAIN"
-    port = 9000
-    dirs = ($HOME /tmp)
-    
-    [node:a1]
-    @use mynode
-    
-    [node:a2]
-    port = 9001
-    
-    # can add hashes like this
-    subhash = key: key2: val1
-
-    # or like this
-    subhash2.key.key2 = val2
-    
-    [app]
-    name = "TestApp"
-    values = [200, 30, 10]
-    version = 2.1
-    settings.active = true
-    settings.retries = 3
-    """
+    # pdb.set_trace()
+    with open("p2.jaml") as file:
+        data = file.read()
 
     os.environ['DOMAIN'] = 'example.com'
     os.environ['HOME'] = '/home/user'
 
-    result = parse_scm(config_text)
-    print("Python Dictionary:")
-    print(json.dumps(result, indent=2))
+    result = parse_scm(data)
+ #   print(result["app"])
+ #   print(json.dumps(result, indent=2))

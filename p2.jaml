@@ -1,0 +1,34 @@
+[@template mynode]
+host = "node$INSTANCE.$DOMAIN"
+port = 9000
+location = NY
+dirs = ($HOME /tmp)
+
+[@template my2]
+my = level 2
+
+[node:a1]
+@use mynode
+
+[node:a2]
+port = "9001"
+
+#[node:a3]
+#@use my2
+#name = a3node 
+
+# can add hashes like this
+subhash = key: key2: val1
+
+# or like this
+subhash2.key.key2 = "val2#"
+
+   subhash2.key.key3.key4.key5 = [23,45]  ## spacing doesnt matter
+
+[app]
+name = "TestApp" # this is a testapp
+values = [200, 30, 10]
+version = 2.1
+settings.active = true
+settings.auth.enabled = false
+settings.retries = 3
