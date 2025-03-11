@@ -18,7 +18,7 @@ port = "9001"
 #name = a3node 
 
 # can add hashes like this
-subhash = key: key2: val1
+subhash = key: key2: val1 # comment0
 
 # or like this
 subhash2.key.key2 = "val2#"
@@ -29,6 +29,9 @@ subhash2.key.key2 = "val2#"
 name = "TestApp" # this is a testapp
 values = [200, 30, 10]
 version = 2.1
+version_comment = 3.9 # comment1
 settings.active = true
+settings.comment = false # comment 2
 settings.auth.enabled = false
 settings.retries = 3
+settings.res.am = 4 # comment 3
