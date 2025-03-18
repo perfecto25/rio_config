@@ -1,8 +1,9 @@
-# FML (*!@**!! Markup Language)
+# FML
+
 
 Flexible Markup Language is a markup language for use in common configuration scenarios.
 
-It is similar to TOML and YAML in concept, but is unique in its approach to handling variables and configuration data
+It is similar to TOML in concept, but is unique in its approach to handling variables and configuration data
 
 ## features
 
@@ -15,3 +16,11 @@ It is similar to TOML and YAML in concept, but is unique in its approach to hand
 
 
 
+deep hash
+
+```
+[check:filesystem:home]
+name = "/home"
+
+[check:filesystem:opt]
+name = "/opt"
