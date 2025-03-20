@@ -20,6 +20,9 @@ level = "debug"
 #usage.pct = 1
 #usage.size.gb = 200
 
+[check:fake:key]
+name = "check this fake"
+
 [check:filesystem:opt]
 path = "/opt"
 usage.size.gb = 30
@@ -29,12 +32,12 @@ path = "/home"
 usage.pct = 20 
 alert.every = 5
 
-[check:filesystem:secure]
-path = "/etc/securedir"
-usage.pct = 20
-perm.user = "root" # alert if user changes
-perm.group = "root"
-perm.mode = 600
+#[check:filesystem:secure]
+#path = "/etc/securedir"
+#usage.pct = 20
+#perm.user = "root" # alert if user changes
+#perm.group = "root"
+#perm.mode = 600
 
 
 #[check:process:kdb]

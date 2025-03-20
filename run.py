@@ -2,6 +2,7 @@
 import os
 import json
 from fml import Fml
+from loguru import logger
 
 if __name__ == "__main__":
     # pdb.set_trace()
@@ -21,5 +22,8 @@ if __name__ == "__main__":
         print("[ERROR] unable to parse config file")
         raise Exception(str(err))
     
+    logger.debug(result)
+    logger.warning(result["check"]["fs"])
+ #   print(result["check"]["filesystem"])
     print(json.dumps(result))
  #   print(json.dumps(result, indent=2))
