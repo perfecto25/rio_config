@@ -1,5 +1,17 @@
 import re
 import os
+import inspect
+from loguru import logger
+
+def print_non_internal_vars():
+    """Prints the names and values of all non-internal variables in the current scope."""
+    frame = inspect.currentframe().f_back
+    variables = frame.f_locals
+    
+    for name, value in variables.items():
+        if not name.startswith('_'):
+            logger.debug(f"{name} = {value}")
+
 
 def substitute_instance(template, instance_id):
     """Create a copy of template with $INSTANCE replaced"""

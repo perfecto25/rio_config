@@ -7,7 +7,7 @@ import copy
 from functools import reduce
 from loguru import logger
 # import pdb
-from .functions import replace_shell_vars, substitute_instance, parse_value
+from .functions import replace_shell_vars, substitute_instance, parse_value, print_non_internal_vars
 
 class Fml():
     def __init__(self):
@@ -17,7 +17,7 @@ class Fml():
         if not lst:
             return {}
         if len(lst) == 1:
-            return {lst[0]: {}}
+            return { lst[0]: {} }
         return {lst[0]: self.create_nested_dict(lst[1:])}
     
     def recursive_merge(self, d1, d2):
@@ -35,6 +35,7 @@ class Fml():
         all_cfg_items = []
         current_section = None
         apply_template = None
+        current_template = None
 
         lines = config_text.strip().split('\n')
 
@@ -49,39 +50,69 @@ class Fml():
 
                 # check if section header
                 if line.startswith("[") and line.endswith("]"):
+                    
                     if line.find("@template") != -1:
+                        current_template = None
                         template_name = line.split("@template")[1].strip("[]").strip()
                         templates[template_name] = {}
+                        current_template = template_name
+                        logger.error(current_template)
                         current_section = templates[template_name]
                     else:
+                        current_template = None
                         section_header = line.strip("[]").split(":")
                         logger.info(f"section_header: {section_header}")
-    #                    result = reduce(lambda x, y: {y: x}, section_header[::-1])
                         keys = self.create_nested_dict(section_header)
-                        #config[keys] = {}
                         all_cfg_items.append(keys)
-                        logger.debug(type(keys))
-                        logger.debug(keys)
-                        # cycle thru section_header and create dicts for each key
-                        # [check:filesystem:opt:blah]
-                        # keychain = [first]
-                        # first = section_header[:1]  #  'check'
-                        # config[first] = {}  'config['check'] = {}'
-                        # last is val
-                        # section_header.pop(last)  # remove last element from list - thats the final value
-                        # while len(section_header > 1)
-                        #  keychain = []
-                        #  key = sectoin_header[last] 'key=blah'
-                           # config[first][key]
+                        current_section = keys
 
-                ## apply template to section
-                if line.startswith("@use"):
-                    logger.debug(f"@USE sec headder {section_header}")
+#                        print_non_internal_vars()
+                # non section header line
+                else: 
+                    logger.info(f"- current section {current_section}")
+                    ## apply template to section
+                    if line.startswith("@use"):
+                        template_name = line[4:].strip()
+                        logger.warning(f"USING template {template_name}")
+                        if template_name in templates and current_section is not None:
+                            for template_key, template_val in templates[template_name].items():
+                                current = current_section
+                                for section_key in section_header:
+                                    logger.info(f"<<<< current  {current}, current_section {current_section}, section_key {section_key}")
+                                    # create empty dict if doesnt exist
+                                    current = current.setdefault(section_key, {})
+                                    current[template_key] = template_val
+                                    logger.info(current)
+                            # template_config = copy.deepcopy(templates[template_name])
+                            # logger.debug(template_config)
+                    
+
+                    if '=' in line and current_section is not None:
+                        logger.debug("81 =  ")
+                    #print(f"current_section {current_section}")
+                        new_key, new_val = [part.strip() for part in line.split('=', 1)]
+                        logger.success(current_template)
+                        logger.success(current_section)    
+                        # if processing a Template, add to Template dict
+                        if current_template:
+                            logger.warning("x")
+                            templates[current_template][new_key] = new_val
+                        else:
+                            # parse the section header and add keyname:keyval as a subhash
+                            current = current_section
+                            for key in section_header:
+                                # create empty dict if doesnt exist
+                                current = current.setdefault(key, {})
+                            current[new_key] = new_val
+                            logger.error(all_cfg_items)
+                        if current_template:     
+                            logger.warning(templates)
+#                    logger.debug(f"SEC LINE {line}, current section {current_section}")
 
 
-            logger.debug(templates)
+
             merged = reduce(self.recursive_merge, all_cfg_items)
-            logger.info(type(merged))
+
             return merged   
 
         except (IndexError, TypeError) as err:

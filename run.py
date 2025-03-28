@@ -21,9 +21,7 @@ if __name__ == "__main__":
     except (IndexError, TypeError) as err:
         print("[ERROR] unable to parse config file")
         raise Exception(str(err))
-    
-    logger.debug(result)
-    logger.warning(result["check"]["fs"])
+
  #   print(result["check"]["filesystem"])
     print(json.dumps(result))
  #   print(json.dumps(result, indent=2))

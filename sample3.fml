@@ -1,17 +1,13 @@
-[@templateddddd]
+[ @template mytemplate  ]
+color =    pink
+color2 = red
 
-[   @template mytemplate]
-tk1 = tv1
-tk2 = tv2
 
-[check:key1:subkey:subkey1-1:subkey1-1-1]
+[check:process:subkey:subkey2:subkey3]
 name = k1
+age = 26
+
 
 [check:fs:/root]
 @use mytemplate
 
-[check:fs:/opt]
-
-[check:fs:/home]
-name = home
-limit.pct = 20
