@@ -1,0 +1,23 @@
+[@template m1]
+templkey = templval
+
+[check:filesystem:root]
+usage = 80 %
+alert = on:stopped:service
+active = true
+age =    @int 36
+
+[check:process:strace]
+@use m1
+name = strace
+matching = \n\n/r/\s 
+
+[check:filesystem:opt]
+path = /opt
+limit = "\n\n30 gb"
+alert = [groups]
+active = false
+
+[check:memory]
+limit = 99
+

@@ -9,17 +9,60 @@ from loguru import logger
 # import pdb
 from .functions import replace_shell_vars, substitute_instance, parse_value, print_non_internal_vars
 
+
 class Fml():
     def __init__(self):
         self.data = None
-    
+
+    def add_to_last_element(self, d, key, value):
+        """ 
+        inserts the key, value from non header section of config file, to the last element of the header section 
+        ie, 
+
+        [header.section]
+        key = val
+
+        >> will insert 
+
+        {
+          "header":
+            "section": {
+              "key": "val"
+            }
+        }
+        
+        """
+        # Check if the current element is a dictionary
+        if isinstance(d, dict):
+            for sub_key in d:
+                # Recurse into the sub-dictionary
+                self.add_to_last_element(d[sub_key], key, value)
+        else:
+            # Base case: If it's not a dictionary, return
+            return
+
+        # If the current dictionary has no further nested dictionaries, add the key-value pair
+        if all(not isinstance(v, dict) for v in d.values()):
+
+            # handle int
+            if value.startswith("@int"):
+                d[key] = int(value.strip('@int'))
+
+            # handle booleans
+            elif value.lower() == 'true':
+                d[key] = True
+            elif value.lower() == 'false':
+                d[key] = False
+            else:
+                d[key] = value
+
     def create_nested_dict(self, lst):
         if not lst:
             return {}
         if len(lst) == 1:
-            return { lst[0]: {} }
+            return {lst[0]: {}}
         return {lst[0]: self.create_nested_dict(lst[1:])}
-    
+
     def recursive_merge(self, d1, d2):
         result = d1.copy()
         for key, value in d2.items():
@@ -42,15 +85,15 @@ class Fml():
         try:
             for line in lines:
                 line = line.strip()
-
                 logger.info(f"line = {line}")
 
+                ### skip comments
                 if not line or line.startswith('#'):
                     continue
 
-                # check if section header
+                ### check if line is a section header
                 if line.startswith("[") and line.endswith("]"):
-                    
+                    ### check if line is defining a template
                     if line.find("@template") != -1:
                         current_template = None
                         template_name = line.split("@template")[1].strip("[]").strip()
@@ -59,6 +102,7 @@ class Fml():
                         logger.error(current_template)
                         current_section = templates[template_name]
                     else:
+                        ### not defining a template, just section header line
                         current_template = None
                         section_header = line.strip("[]").split(":")
                         logger.info(f"section_header: {section_header}")
@@ -67,53 +111,28 @@ class Fml():
                         current_section = keys
 
 #                        print_non_internal_vars()
-                # non section header line
-                else: 
+                ### non section header line
+                else:
                     logger.info(f"- current section {current_section}")
-                    ## apply template to section
+                    # apply template to section
                     if line.startswith("@use"):
                         template_name = line[4:].strip()
                         logger.warning(f"USING template {template_name}")
                         if template_name in templates and current_section is not None:
                             for template_key, template_val in templates[template_name].items():
-                                current = current_section
-                                for section_key in section_header:
-                                    logger.info(f"<<<< current  {current}, current_section {current_section}, section_key {section_key}")
-                                    # create empty dict if doesnt exist
-                                    current = current.setdefault(section_key, {})
-                                    current[template_key] = template_val
-                                    logger.info(current)
-                            # template_config = copy.deepcopy(templates[template_name])
-                            # logger.debug(template_config)
-                    
+                                self.add_to_last_element(current_section, template_key, template_val)
 
                     if '=' in line and current_section is not None:
-                        logger.debug("81 =  ")
-                    #print(f"current_section {current_section}")
                         new_key, new_val = [part.strip() for part in line.split('=', 1)]
-                        logger.success(current_template)
-                        logger.success(current_section)    
                         # if processing a Template, add to Template dict
                         if current_template:
-                            logger.warning("x")
                             templates[current_template][new_key] = new_val
                         else:
                             # parse the section header and add keyname:keyval as a subhash
-                            current = current_section
-                            for key in section_header:
-                                # create empty dict if doesnt exist
-                                current = current.setdefault(key, {})
-                            current[new_key] = new_val
-                            logger.error(all_cfg_items)
-                        if current_template:     
-                            logger.warning(templates)
-#                    logger.debug(f"SEC LINE {line}, current section {current_section}")
-
-
+                            self.add_to_last_element(current_section, new_key, new_val)
 
             merged = reduce(self.recursive_merge, all_cfg_items)
-
-            return merged   
+            return merged
 
         except (IndexError, TypeError) as err:
             print(f"\n[ERROR] unable to parse file line: {line}\n")

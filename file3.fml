@@ -1,12 +1,7 @@
 [ @template mytemplate  ]
 color =    pink
-color2 = red
-
-
-[check:process:subkey:subkey2:subkey3]
-name = k1
-age = 26
-
+limit = 22
+size:distance = 90
 
 [check:fs:/root]
 @use mytemplate
