@@ -44,16 +44,46 @@ class Fml():
         # If the current dictionary has no further nested dictionaries, add the key-value pair
         if all(not isinstance(v, dict) for v in d.values()):
 
-            # handle int
-            if value.startswith("@int"):
-                d[key] = int(value.strip('@int'))
+            # handle strings
+            if value.startswith('"') and value.endswith('"'):
+                value = value.rstrip('"').lstrip('"')
+                d[key] = str(value)
 
-            # handle booleans
-            elif value.lower() == 'true':
+            # handle bools
+            if value.lower() == 'true':
                 d[key] = True
             elif value.lower() == 'false':
                 d[key] = False
+
+            # handle floats
+            elif re.match(r'^-?\d+\.\d+$', value):
+                d[key] = float(value)
+
+            # handle ints
+            elif re.match(r'^-?\d+$', value):
+                d[key] = int(value)
+
+            # handle lists
+            elif value.startswith('[') and value.endswith(']'):
+                items = value[1:-1].split(',')
+                d[key] = items
+            
+            # handle env vars
+            elif value.startswith('${') and value.endswith('}'):
+                logger.info("VAR VAR    ")
+                start = value.index('${')
+                end = value.index('}', start)
+                var = value[start+2:end].strip()
+                logger.success(var)
+                default = var.split(':')[1].strip() if ':' in var else ''
+                var_name = var.split(':')[0]
+                logger.debug(f"var_name {var_name}")
+                value = value[:start] + os.getenv(var_name, default) + value[end+1:]
+                d[key] = value
+
+
             else:
+                logger.debug(value)
                 d[key] = value
 
     def create_nested_dict(self, lst):
@@ -124,6 +154,9 @@ class Fml():
 
                     if '=' in line and current_section is not None:
                         new_key, new_val = [part.strip() for part in line.split('=', 1)]
+
+                        logger.warning(new_key)
+                        logger.warning(new_val)
                         # if processing a Template, add to Template dict
                         if current_template:
                             templates[current_template][new_key] = new_val

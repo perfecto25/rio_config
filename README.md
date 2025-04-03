@@ -1,5 +1,4 @@
-# FML
-
+# FLEX
 
 Flexible Markup Language is a markup language for use in common configuration scenarios.
 
@@ -12,25 +11,15 @@ It is similar to TOML in concept, but is unique in its approach to handling vari
 - clean and simple syntax to describe complex data structures
 - ability to create template blocks for repeated options
 - ability to pass raw strings without using escape sequences
-- PAML can natively ingest shell environment variables at runtime
+- can natively ingest shell environment variables at runtime
+
 
 
 
 ## flags
 
-@int - enforces integer type
-
-    age = @int 6
-
-    [building:stats]
-    constructed = @int 1950
-    floors = @int 12
-
-@str - enforces string type
-
 
 @use - use template (must match template name)
-
 
 @template - create new template
 
@@ -84,3 +73,32 @@ name = "/home"
 
 [check:filesystem:opt]
 name = "/opt"
+
+```
+
+### Using environment variables
+
+to process a shell environment variable, provide @env flag
+
+    [database.credential]
+    password = @env DB_PASSWORD
+
+this will translate a shell variable $DB_PASSWORD
+
+to pass a default fallback value if env variable isnt set, provide a default using the double colon
+
+    [database.credential]
+    password = @env DB_PASSWORD:abracadabra123
+
+
+this will use "/opt/default" as the fallback value
+
+
+
+### Raw String
+
+@raw - use raw input 
+
+    [check:process:custom]
+    match = @raw /home/user/myprocess.*$
+

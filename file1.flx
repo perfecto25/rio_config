@@ -1,0 +1,30 @@
+[@template m1]
+templkey = templval
+
+[check:filesystem:root]
+usage = 80 %
+alert = admins
+active = true
+age =  36
+
+[check:filesystem:root:notify:time]
+start = 20:00
+end = 30:00
+sequence = 16s
+password = @env DB_PASSWORD:abracadabra123
+
+[check:process:strace]
+@use m1
+name = strace
+matching = \n\n/r/\s
+
+[check:filesystem:opt]
+path = /opt
+limit = "30     gb"
+alert = [group1,group2,group3]
+active = false
+
+[check:memory]
+limit = 99
+@use m1
+
