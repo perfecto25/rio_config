@@ -1,8 +1,0 @@
-[ @template mytemplate  ]
-color =    pink
-limit = 22
-size:distance = 90
-
-[check:fs:/root]
-@use mytemplate
-

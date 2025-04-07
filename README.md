@@ -1,22 +1,33 @@
-# FLEX
+# FLEX Markup Language
 
-Flexible Markup Language is a markup language for use in common configuration scenarios.
+Flex is a markup language for use in common configuration scenarios.
 
 It is similar to TOML in concept, but is unique in its approach to handling variables and configuration data
 
-## features
-
-- no spacing requirements (yaml)
-- braces not necessary (json)
+## Features
+- no spacing requirements (ie, 2 spaces in YAML)
+- braces not necessary (ie, json)
+- can add comments
 - clean and simple syntax to describe complex data structures
 - ability to create template blocks for repeated options
-- ability to pass raw strings without using escape sequences
-- can natively ingest shell environment variables at runtime
+- can natively ingest shell environment variables at runtime, including fallback values
 
 
+## Usage
 
+Flex can handle the following types
 
-## flags
+- strings
+- ints
+- floats
+- booleans
+- arrays
+
+To create a basic key:value pair, you need a Header block
+
+[Parent Key]
+child key = child value
+
 
 
 @use - use template (must match template name)
@@ -25,10 +36,10 @@ It is similar to TOML in concept, but is unique in its approach to handling vari
 
 
     [@template red]
-    template key = this is a red value
+    from-red-template = this is a red value
 
     [@template blue]
-    template key = this is a blue value
+    from-blue-template = this is a blue value
 
     [Flowers:species:rose]
     @use red
@@ -48,15 +59,15 @@ It is similar to TOML in concept, but is unique in its approach to handling vari
       "Flowers": {
         "species": {
           "rose": {
-            "template key": "this is a red value",
+            "from-red-template": "this is a red value",
             "roses": "are red"
           },
           "violet": {
-            "template key": "this is a blue value",
+            "from-blue-template": "this is a blue value",
             "violets": "are blue"
           },
           "tulip": {
-            "template key": "this is a red value",
+            "from-red-template": "this is a red value",
             "tulips": "are red too!"
           }
         }
@@ -85,20 +96,12 @@ to process a shell environment variable, provide @env flag
 
 this will translate a shell variable $DB_PASSWORD
 
-to pass a default fallback value if env variable isnt set, provide a default using the double colon
+to pass a default fallback value if env variable isnt set, provide a default using the double pipe OR symbol
 
     [database.credential]
-    password = @env DB_PASSWORD:abracadabra123
+    password = @env DB_PASSWORD || abracadabra123
 
 
-this will use "/opt/default" as the fallback value
+this will use "abracadabra123" as the fallback value
 
-
-
-### Raw String
-
-@raw - use raw input 
-
-    [check:process:custom]
-    match = @raw /home/user/myprocess.*$
 

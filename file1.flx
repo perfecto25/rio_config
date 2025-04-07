@@ -1,22 +1,22 @@
-[@template m1]
-templkey = templval
+[@template common]
+alert = admins@company.com
 
 [check:filesystem:root]
+@use common
 usage = 80 %
-alert = admins
 active = true
 age =  36
 
 [check:filesystem:root:notify:time]
 start = 20:00
 end = 30:00
-sequence = 16s
-password = @env DB_PASSWORD:abracadabra123
+sequence = 16 
+password = @env DB_PASSWORD || abracadabra123
 
 [check:process:strace]
-@use m1
+@use common
 name = strace
-matching = \n\n/r/\s
+process_id = @env STRACE_ID
 
 [check:filesystem:opt]
 path = /opt
@@ -26,5 +26,5 @@ active = false
 
 [check:memory]
 limit = 99
-@use m1
+@use common
 

@@ -1,16 +1,13 @@
 
 import os
-import json
 import re
 import sys
-import copy
+
 from functools import reduce
 from loguru import logger
-# import pdb
-from .functions import replace_shell_vars, substitute_instance, parse_value, print_non_internal_vars
 
 
-class Fml():
+class Flex():
     def __init__(self):
         self.data = None
 
@@ -69,19 +66,17 @@ class Fml():
                 d[key] = items
             
             # handle env vars
-            elif value.startswith('${') and value.endswith('}'):
+            elif value.startswith('@env'):
                 logger.info("VAR VAR    ")
-                start = value.index('${')
-                end = value.index('}', start)
-                var = value[start+2:end].strip()
-                logger.success(var)
-                default = var.split(':')[1].strip() if ':' in var else ''
-                var_name = var.split(':')[0]
-                logger.debug(f"var_name {var_name}")
-                value = value[:start] + os.getenv(var_name, default) + value[end+1:]
+                var = value.split("@env")[1].strip()
+                logger.debug(var)
+                if '||' in var:
+                    env_var = var.split('||')[0].strip()
+                    default = var.split('||')[1].strip()
+                    value = os.getenv(env_var, default)
+                else:
+                    value = os.getenv(var, "")
                 d[key] = value
-
-
             else:
                 logger.debug(value)
                 d[key] = value
@@ -153,16 +148,22 @@ class Fml():
                                 self.add_to_last_element(current_section, template_key, template_val)
 
                     if '=' in line and current_section is not None:
+                        
                         new_key, new_val = [part.strip() for part in line.split('=', 1)]
-
-                        logger.warning(new_key)
-                        logger.warning(new_val)
                         # if processing a Template, add to Template dict
                         if current_template:
                             templates[current_template][new_key] = new_val
                         else:
+                        #     if new_val.startswith('@raw'):
+                        #         logger.error(f"RAW RAW {new_val}")
+                        #         new_val = new_val.split('@raw')[1]
+                        #         #val = repr(val)[1:-1]
+                        #         logger.error(f"newval {new_val}")
+                            
+
                             # parse the section header and add keyname:keyval as a subhash
                             self.add_to_last_element(current_section, new_key, new_val)
+                    
 
             merged = reduce(self.recursive_merge, all_cfg_items)
             return merged
