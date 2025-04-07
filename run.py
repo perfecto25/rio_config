@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 import os
 import json
-from fml import Fml
+from flex_markup import Flex
+from loguru import logger
 
 if __name__ == "__main__":
     # pdb.set_trace()
@@ -13,13 +14,15 @@ if __name__ == "__main__":
     os.environ['DOMAIN'] = 'example.com'
     os.environ['HOME'] = '/home/user'
     try:
-        fml = Fml()
-        result = fml.parse(data)
+        flex = Flex()
+        result = flex.parse(data)
 
 #        result = parse_scm(data)
     except (IndexError, TypeError) as err:
         print("[ERROR] unable to parse config file")
         raise Exception(str(err))
-    
-    print(json.dumps(result))
+
+ #   print(result["check"]["filesystem"])
+    logger.debug(type(result))
+    print(json.dumps(result, ensure_ascii=False))
  #   print(json.dumps(result, indent=2))
