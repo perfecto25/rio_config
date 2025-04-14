@@ -23,12 +23,32 @@ Flex can handle the following types
 - booleans
 - arrays
 
-To create a basic key:value pair, you need a Header block
-
-[Parent Key]
-child key = child value
 
 
+To create a basic key:value pair, you need a Header block (key)
+
+    [Key]
+    Value
+
+    [Name]
+    Joe 
+
+    # equals  {"Name": "Joe"}
+
+To created a nested hash
+
+    [Parent Key]
+    child key = child value
+
+    [Employee]
+    Name = Joe
+
+    # equals {"Employee": {"Name": "Joe"}}
+
+To create an array
+
+    [My List]
+    [first, second, third]
 
 @use - use template (must match template name)
 

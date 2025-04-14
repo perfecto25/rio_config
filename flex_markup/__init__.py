@@ -27,7 +27,7 @@ class Flex():
               "key": "val"
             }
         }
-        
+
         """
         # Check if the current element is a dictionary
         if isinstance(d, dict):
@@ -64,12 +64,10 @@ class Flex():
             elif value.startswith('[') and value.endswith(']'):
                 items = value[1:-1].split(',')
                 d[key] = items
-            
+
             # handle env vars
             elif value.startswith('@env'):
-                logger.info("VAR VAR    ")
                 var = value.split("@env")[1].strip()
-                logger.debug(var)
                 if '||' in var:
                     env_var = var.split('||')[0].strip()
                     default = var.split('||')[1].strip()
@@ -104,6 +102,7 @@ class Flex():
         current_section = None
         apply_template = None
         current_template = None
+        section_header = None
 
         lines = config_text.strip().split('\n')
 
@@ -112,13 +111,13 @@ class Flex():
                 line = line.strip()
                 logger.info(f"line = {line}")
 
-                ### skip comments
+                # skip comments
                 if not line or line.startswith('#'):
                     continue
 
-                ### check if line is a section header
+                # check if line is a section header
                 if line.startswith("[") and line.endswith("]"):
-                    ### check if line is defining a template
+                    # check if line is defining a template
                     if line.find("@template") != -1:
                         current_template = None
                         template_name = line.split("@template")[1].strip("[]").strip()
@@ -127,7 +126,17 @@ class Flex():
                         logger.error(current_template)
                         current_section = templates[template_name]
                     else:
-                        ### not defining a template, just section header line
+
+                        # check if list
+                        if section_header:
+                            logger.debug(f"LIST section_header {section_header}")
+                            logger.debug(line)
+                            line = line.strip("[]").split(",")
+                            if '=' not in line and section_header is not None:
+                                for key in current_section.keys():
+                                    current_section[key] = line
+
+                        # not defining a template or a List, just section header line
                         current_template = None
                         section_header = line.strip("[]").split(":")
                         logger.info(f"section_header: {section_header}")
@@ -136,7 +145,7 @@ class Flex():
                         current_section = keys
 
 #                        print_non_internal_vars()
-                ### non section header line
+                # non section header line
                 else:
                     logger.info(f"- current section {current_section}")
                     # apply template to section
@@ -148,22 +157,37 @@ class Flex():
                                 self.add_to_last_element(current_section, template_key, template_val)
 
                     if '=' in line and current_section is not None:
-                        
+                        logger.debug(line)
                         new_key, new_val = [part.strip() for part in line.split('=', 1)]
+
+                        # drop line if key is empty
+                        if not new_key:
+                            continue
                         # if processing a Template, add to Template dict
                         if current_template:
                             templates[current_template][new_key] = new_val
                         else:
-                        #     if new_val.startswith('@raw'):
-                        #         logger.error(f"RAW RAW {new_val}")
-                        #         new_val = new_val.split('@raw')[1]
-                        #         #val = repr(val)[1:-1]
-                        #         logger.error(f"newval {new_val}")
-                            
+                            #     if new_val.startswith('@raw'):
+                            #         logger.error(f"RAW RAW {new_val}")
+                            #         new_val = new_val.split('@raw')[1]
+                            #         #val = repr(val)[1:-1]
+                            #         logger.error(f"newval {new_val}")
 
                             # parse the section header and add keyname:keyval as a subhash
                             self.add_to_last_element(current_section, new_key, new_val)
-                    
+
+                    # handle single key=val in form of:
+                    # [key]
+                    # val
+                    logger.success(line)
+                    logger.success(current_section)
+                    if '=' not in line and current_section is not None:
+                        for key in current_section.keys():
+                            current_section[key] = line
+#                        logger.debug(keys[0])
+                        # current_section[keys[0]] = line
+                        logger.error(current_section)
+                        logger.error(line)
 
             merged = reduce(self.recursive_merge, all_cfg_items)
             return merged

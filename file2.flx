@@ -1,2 +1,17 @@
-[]
-key = val
+@ name
+Joe
+
+@ age=29 
+
+@ address
+street = "128 main street"
+city = Dallas
+  state = TX
+
+[k.sk]
+n  > 
+
+@ MyList
+[first, second, third]
+
+
