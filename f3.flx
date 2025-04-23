@@ -1,11 +1,25 @@
+[@template abc]
+abckey = @env MYKEY || 'abcval'
+
+[@template def]
+defkey=defval
+
 [department]
 name = joe
+friends = - mary,bob
 
 [department]
 occupation = plumber
 
 [company]
 city = austin
+@use abc
+locations =
+  - 
 
 [company.office]
 4th floor
+
+[some.key]
+@use def
+password = @env MYPASSWORD || 'abracadabra'
