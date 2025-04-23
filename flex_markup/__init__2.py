@@ -11,6 +11,16 @@ class Flex():
     def __init__(self):
         self.data = None
 
+    def merge_dicts(self, dict1, dict2):
+        merged = dict1.copy()
+        for key, value in dict2.items():
+            if key in merged:
+                # Handle duplicate keys, e.g., combine values or keep the original
+                merged[key] = [merged[key], value] #Example: combine values in a list
+            else:
+                merged[key] = value
+        return merged
+
     def add_to_last_element(self, d, key, value):
         """ 
         inserts the key, value from non header section of config file, to the last element of the header section 
@@ -67,9 +77,7 @@ class Flex():
 
             # handle env vars
             elif value.startswith('@env'):
-                logger.info("VAR VAR    ")
                 var = value.split("@env")[1].strip()
-                logger.debug(var)
                 if '||' in var:
                     env_var = var.split('||')[0].strip()
                     default = var.split('||')[1].strip()
@@ -97,6 +105,10 @@ class Flex():
                 result[key] = value
         return result
 
+
+
+    
+
     def parse(self, config_text):
         config = {}
         templates = {}
@@ -104,67 +116,91 @@ class Flex():
         current_section = None
         apply_template = None
         current_template = None
+        section_header = None
+
+        ret = {}
+        template = None
+        topkey = None
 
         lines = config_text.strip().split('\n')
 
         try:
             for line in lines:
                 line = line.strip()
-                logger.info(f"line = {line}")
+                logger.info(f""" 
+line : {line},
+curr section: {current_section} 
+current template: {current_template}
+all templates: {templates} 
+                        """)
 
                 # skip comments
                 if not line or line.startswith('#'):
                     continue
 
-                # check if line is a section header
+                # topkey or Template line
                 if line.startswith("[") and line.endswith("]"):
-                    # check if line is defining a template
+                    # clear flags
+                    current_template = None
+                    topkey = None
+
                     if line.find("@template") != -1:
-                        current_template = None
+                        logger.warning("TEMPLATE")
                         template_name = line.split("@template")[1].strip("[]").strip()
                         templates[template_name] = {}
                         current_template = template_name
-                        logger.error(current_template)
+                        logger.debug(templates)
                         current_section = templates[template_name]
-                    else:
-                        # not defining a template, just section header line
-                        current_template = None
-                        section_header = line.strip("[]").split(":")
-                        logger.info(f"section_header: {section_header}")
-                        keys = self.create_nested_dict(section_header)
-                        all_cfg_items.append(keys)
-                        current_section = keys
+                        continue
+                    
+                    # regular topkey ie [one:two:three]
+                    topkey = None
+                    current_section = None
+                    topkey = line.strip("[]").split(":")
+                    current_section = self.create_nested_dict(topkey)
+                
+                    # merge ret with current_section dict
+                    ret = self.merge_dicts(ret, current_section)
 
-#                        print_non_internal_vars()
-                # non section header line
+                    logger.warning(current_section)
+                    continue
+                logger.info(current_section)
+
+                # line is part of template
+                if '=' in line and current_template:
+                    new_key, new_val = [part.strip() for part in line.split('=', 1)]
+                    templates[current_template][new_key] = new_val
+                    continue
+
+                # topkey: subhash
+                if '=' in line and current_section:
+                    
+                    logger.debug(topkey)    
+                    new_key, new_val = [part.strip() for part in line.split('=', 1)]
+                    
+                    if not new_key:
+                        continue  # drop line if key is empty
+
+                    self.add_to_last_element(current_section, new_key, new_val)
+                    continue
+
+                if line.startswith("@use"):
+                    template_name = line[4:].strip()
+                    logger.warning(f"USING template {template_name}")
+                    if template_name in templates and current_section is not None:
+                        for template_key, template_val in templates[template_name].items():
+                            self.add_to_last_element(current_section, template_key, template_val)
+                            continue
+
                 else:
-                    logger.info(f"- current section {current_section}")
-                    # apply template to section
-                    if line.startswith("@use"):
-                        template_name = line[4:].strip()
-                        logger.warning(f"USING template {template_name}")
-                        if template_name in templates and current_section is not None:
-                            for template_key, template_val in templates[template_name].items():
-                                self.add_to_last_element(current_section, template_key, template_val)
+                    # topkey: value
+                    self.add_to_last_element(topkey, new_key, new_val)
+                    ret[topkey] = line
 
-                    if '=' in line and current_section is not None:
+            return ret
 
-                        new_key, new_val = [part.strip() for part in line.split('=', 1)]
-                        # if processing a Template, add to Template dict
-                        if current_template:
-                            templates[current_template][new_key] = new_val
-                        else:
-                            #     if new_val.startswith('@raw'):
-                            #         logger.error(f"RAW RAW {new_val}")
-                            #         new_val = new_val.split('@raw')[1]
-                            #         #val = repr(val)[1:-1]
-                            #         logger.error(f"newval {new_val}")
-
-                            # parse the section header and add keyname:keyval as a subhash
-                            self.add_to_last_element(current_section, new_key, new_val)
-
-            merged = reduce(self.recursive_merge, all_cfg_items)
-            return merged
+ #           merged = reduce(self.recursive_merge, all_cfg_items)
+  #          return merged
 
         except (IndexError, TypeError) as err:
             print(f"\n[ERROR] unable to parse file line: {line}\n")

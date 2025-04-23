@@ -24,7 +24,7 @@ limit = "30     gb"
 alert = [group1,group2,group3]
 active = false
 
-[check:memory]
+[check.memory]
 limit = 99
 @use common
 

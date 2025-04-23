@@ -1,0 +1,11 @@
+[department]
+name = joe
+
+[department]
+occupation = plumber
+
+[company]
+city = austin
+
+[company.office]
+4th floor

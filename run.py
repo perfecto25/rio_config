@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import os
 import json
-from flex_markup import Flex
+from flex_markup.__init__2 import Flex
 from loguru import logger
 
 if __name__ == "__main__":

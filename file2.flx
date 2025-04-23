@@ -1,17 +1,29 @@
-@ name
+[name]
 Joe
 
-@ age=29 
+[age]
+29 
 
-@ address
+[address]
 street = "128 main street"
 city = Dallas
   state = TX
 
+[department.sub.key]
+26
+
 [k.sk]
 n  > 
 
-@ MyList
-[first, second, third]
+[MyList]
+- first, second, third
+
+[mylist2]
+- one
+- two
+- three
+
+
+
 
 
