@@ -1,12 +1,17 @@
 [@template abc]
-abckey = @env MYKEY || 'abcval'
+abckey = abcval
 
 [@template def]
 defkey=defval
 
 [department]
 name = joe
-friends = - mary,bob
+friends = "- mary,bob"
+comments = """
+this is a multiline comment
+spanning many
+lines!!
+"""
 
 [department]
 occupation = plumber
@@ -14,8 +19,9 @@ occupation = plumber
 [company]
 city = austin
 @use abc
-locations =
-  - 
+locations = -
+  city1,
+  city2
 
 [company.office]
 4th floor
@@ -23,3 +29,4 @@ locations =
 [some.key]
 @use def
 password = @env MYPASSWORD || 'abracadabra'
+cars = - "ford, ferrari, tesla" 

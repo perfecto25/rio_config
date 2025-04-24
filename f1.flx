@@ -1,45 +1,50 @@
 [@template common]
 alert = admins@company.com
 
-[check:filesystem:root]
+[check.filesystem.root]
 @use common
 usage = 80 %
 active = true
 age =  36
 
-[check:filesystem:root:notify:time]
+[check.filesystem.root.notify.time]
 start = 20:00
 end = 30:00
 sequence = 16 
 password = @env DB_PASSWORD || abracadabra123
 
-[check:process:strace]
+[check.process.strace]
 @use common
 name = strace
 process_id = @env STRACE_ID
 
-[check:filesystem:opt]
+[check.filesystem.opt]
 path = /opt
 limit = "30     gb"
-alert = [group1,group2,group3]
+alert = - group1,group2,group3
 active = false
 
 [check.memory]
 limit = 99
 @use common
 
-#[books]
-#published = [
-#  rosy, 
-#  black, 
-#  red,
-#  velvet
-#]
+[books]
+published = -
+  rosy, 
+  black, 
+  red,
+  velvet
 
 
-#[MyList2]
-#this is = [one,who,three]
+[MyList2]
+this is = - one,who,three
+comment = """ this 
+is a 
+    multi   lines
+       comment  
+spanning 
+many
 
-#[key4]
-#val 4
-#v 44
+
+lines   
+"""
