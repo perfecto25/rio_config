@@ -1,0 +1,28 @@
+# this is a comment
+; this is also a comment
+
+
+[spaceballs]
+title = spaceballs
+year = 1987
+characters = - Lonestar, Barf, Druish Princess, Dark Helmet
+actors = -
+  Bill Pullman,
+  John Candy,
+
+comments = """ this is one
+funny,
+no! very...
+funny movie!!!
+"""
+
+
+[spaceballs]
+power = the Schwartz
+
+# subkeys are separated by dot, "key.subkey"
+[spaceballs.vehicles]
+Winnebago
+
+[spaceballs]
+vehicles = French Maid

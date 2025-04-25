@@ -1,0 +1,39 @@
+{
+  
+  "workbench.colorTheme": "One Monokai",
+  "workbench.iconTheme": "vscode-icons",
+  "workbench.editor.languageDetection": true,
+  "editor.mouseWheelZoom": true,
+  "editor.minimap.enabled": false,
+  "files.associations": {
+    "*.sls": "yaml"
+  },
+  "[python]": {
+    "editor.tabSize": 4,
+    "editor.wordBasedSuggestions": "off",
+    "editor.defaultFormatter": "ms-python.autopep8",
+    "editor.formatOnSave": false,
+    "editor.autoIndent": "full"
+  },
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "editor.autoIndent": "full"
+  },
+  "[*]": {
+    "editor.tabSize": 2
+  },
+  "editor.tabSize": 2,
+  "editor.indentSize": "tabSize",
+  "explorer.confirmDelete": false,
+  "autopep8.args": ["--max-line-length=200"],
+  "vsicons.dontShowNewVersionMessage": true,
+  "window.zoomLevel": 1,
+  "files.autoSave": "afterDelay",
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.renderWhitespace": "all"
+}
