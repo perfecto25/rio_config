@@ -1,21 +1,28 @@
 # this is a comment
 ; this is also a comment
 
-
 [spaceballs]
 title = spaceballs
 year = 1987
-characters = - Lonestar, Barf, Druish Princess, Dark Helmet
+characters = - "Lonestar", Barf, Druish Princess, Dark Helmet
+
+real_bool_true = true
+real_bool_true_2 = True
+real_bool_false = false
+real_bool_false_2 = False
+fake_bool_true = 'true'
+fake_bool_false = "false"
+
 actors = -
-  Bill Pullman,
+  "Bill Pullman",
   John Candy,
+  "26"
 
 comments = """ this is one
 funny,
 no! very...
 funny movie!!!
 """
-
 
 [spaceballs]
 power = the Schwartz

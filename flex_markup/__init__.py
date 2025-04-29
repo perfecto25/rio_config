@@ -1,5 +1,6 @@
 import re
 import os
+from loguru import logger
 
 class Flex():
     def __init__(self):
@@ -31,16 +32,48 @@ class Flex():
         multiline_comment_start_pattern = re.compile(r'^\s*([^=]+?)\s*=\s*"""\s*(.*)$')  # Matches key = """ with optional content
         multiline_comment_end_pattern = re.compile(r'^\s*(.*?)\s*"""\s*$')  # Matches optional content before """
 
+        def get_type(value):
+            """checks if an integer, string, bool"""
+            logger.debug(value)
+            logger.debug(type(value))
+
+            ## String
+            if value.startswith('"') or value.startswith("'"):
+                logger.debug('STRING')
+
+                value = value.rstrip('"').rstrip("'").lstrip('"').lstrip("' ")
+                logger.warning(type(value))
+                return str(value)
+            
+            ## Integer
+            try:
+                value = int(value)
+                logger.debug(f"{value} INTO INT!!")
+                return value
+            except (TypeError, ValueError):
+                logger.warning("cant turn into int")
+                pass
+
+            logger.info("continuining to BOOL")
+            ## Boolean
+            if value in ["true", "True"]: 
+                return True
+            if value in ["false", "False"]:
+                return False
+            
+            return value
+            
         def substitute_env_vars(value):
             """Replace @env ENV_VAR || 'fallback' with environment variable or fallback."""
+            
             def replace_match(match):
                 env_var = match.group(1).strip()
                 fallback = match.group(2)
                 return os.getenv(env_var, fallback)
-            
+            logger.warning(replace_match)
             return env_var_pattern.sub(replace_match, value)
 
-        def process_list_items(items, apply_env_vars=True):
+        def process_list_items(items, apply_env_vars=False):
             """Process list items, preserving quoted strings as single elements."""
             result = []
             for item in items:
@@ -54,7 +87,10 @@ class Flex():
                         item_text = match.group(1) if match.group(1) is not None else match.group(2)
                         item_text = item_text.strip()
                         if item_text:
+                            item_text = get_type(item_text)
+            
                             result.append(substitute_env_vars(item_text) if apply_env_vars else item_text)
+            logger.success(result)
             return result
 
         def end_multiline_list():
@@ -62,6 +98,7 @@ class Flex():
             nonlocal parsing_multiline_list, multiline_list_key, multiline_list_items
             if multiline_list_items:
                 processed_items = process_list_items(multiline_list_items)
+                logger.error(processed_items)
                 if current_template is not None:
                     current_template[multiline_list_key] = processed_items
                 elif current_section is not None:
@@ -96,6 +133,7 @@ class Flex():
 
                 # Handle multiline comment
                 if parsing_multiline_comment:
+                    logger.info("PARSING MULTILINE COMMENT")
                     end_comment_match = multiline_comment_end_pattern.match(line)
                     if end_comment_match:
                         # Capture content before """ on the closing line
@@ -177,21 +215,28 @@ class Flex():
                 kv_match = kv_pattern.match(line)
                 if kv_match:
                     key = kv_match.group(1).strip()
-                    value = kv_match.group(2).strip()
-                    list_match = single_line_list_pattern.match(value)
+                    value = get_type(kv_match.group(2).strip())
+
+                    logger.info(f"KV {key}:{value}")
+                    list_match = single_line_list_pattern.match(str(value))
                     if list_match:
                         items = [list_match.group(1)]
                         processed_items = process_list_items(items)
+                        #logger.error(processed_items)
                         if current_template is not None:
                             current_template[key] = processed_items
                         elif current_section is not None:
                             current_section[key] = processed_items
-                    elif multiline_list_start_pattern.match(value):
+                    elif multiline_list_start_pattern.match(str(value)):
                         parsing_multiline_list = True
                         multiline_list_key = key
                         multiline_list_items = []
-                    else:
+
+                    elif env_var_pattern.match(str(value)):
+                        logger.debug("ENV VAR PATERMN")
                         value = substitute_env_vars(value)
+                    else:
+                        
                         if current_template is not None:
                             current_template[key] = value
                         elif current_section is not None:
@@ -214,6 +259,7 @@ class Flex():
 
                 # Check for single value or section-level list
                 list_match = single_line_list_pattern.match(line)
+                
                 if list_match and current_section is not None and section_path:
                     items = [list_match.group(1)]
                     processed_items = process_list_items(items)
@@ -227,9 +273,12 @@ class Flex():
                 # Check for single value
                 value_match = single_value_pattern.match(line)
                 if value_match and current_section is not None and section_path:
+                    logger.info("single VALUE")
                     value = value_match.group(1).strip()
-                    value = substitute_env_vars(value)
+                    value = get_type(substitute_env_vars(value))
+
                     parent_section = result
+                    
                     for part in section_path[:-1]:
                         parent_section = parent_section[part]
                     parent_section[section_path[-1]] = value
@@ -242,6 +291,6 @@ class Flex():
             if parsing_multiline_comment:
                 print("Warning: Unclosed multiline comment at EOF")
                 end_multiline_comment()
-
+        logger.success(result)
         return result
 

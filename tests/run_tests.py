@@ -1,7 +1,6 @@
 #!/bin/env python3
 
 
-from flex_markup import Flex
 import json
 import sys
 import pytest
@@ -9,10 +8,11 @@ from os.path import dirname, join, abspath
 
 # import repo version of dictor, not pip-installed version
 sys.path.insert(0, abspath(join(dirname(__file__), "..")))
+from flex_markup import Flex
+
 flex = Flex()
 try:
     result = flex.parse_file('data.flx')
-
 except Exception as error:
     raise Exception(error)
 
@@ -28,6 +28,10 @@ def test_int_return():
     output = result['spaceballs']['year']
     assert output == 1987
 
+def test_fake_int_return():
+    """test a fake int (string)"""
+    output = result['spaceballs']['actors'][2]
+    assert output == '26'
 
 def test_list_return():
     """test for basic list return"""
@@ -69,6 +73,30 @@ def test_subkey_values():
     """
     output = result['spaceballs']['vehicles']
     assert output == 'Winnebago'
+
+def test_boolean_values():
+    """
+    test return of bools: true, false True, False
+
+    """
+    output = result['spaceballs']['real_bool_true']
+    assert output == True
+
+    output = result['spaceballs']['fake_bool_true']
+    assert output == 'true'
+
+    output = result['spaceballs']['fake_bool_false']
+    assert output == 'false'
+
+
+ # test @env
+ # test @template
+ # test @use
+
+ # test int to str  age = "30" << str return
+# test raising error if same key:val exists
+
+
 
 
 # def test_simple_dict():
