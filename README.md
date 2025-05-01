@@ -125,3 +125,9 @@ to pass a default fallback value if env variable isnt set, provide a default usi
 this will use "abracadabra123" as the fallback value
 
 
+## Testing 
+
+pip install pytest
+
+shell> cd tests
+shell> pytest -sv tests/run_tests.py

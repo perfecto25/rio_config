@@ -1,197 +1,309 @@
-
-import os
 import re
-import sys
-
-from functools import reduce
+import os
 from loguru import logger
-
 
 class Flex():
     def __init__(self):
         self.data = None
 
-    def add_to_last_element(self, d, key, value):
-        """ 
-        inserts the key, value from non header section of config file, to the last element of the header section 
-        ie, 
-
-        [header.section]
-        key = val
-
-        >> will insert 
-
-        {
-          "header":
-            "section": {
-              "key": "val"
-            }
-        }
-
-        """
-        # Check if the current element is a dictionary
-        if isinstance(d, dict):
-            for sub_key in d:
-                # Recurse into the sub-dictionary
-                self.add_to_last_element(d[sub_key], key, value)
-        else:
-            # Base case: If it's not a dictionary, return
-            return
-
-        # If the current dictionary has no further nested dictionaries, add the key-value pair
-        if all(not isinstance(v, dict) for v in d.values()):
-
-            # handle strings
-            if value.startswith('"') and value.endswith('"'):
-                value = value.rstrip('"').lstrip('"')
-                d[key] = str(value)
-
-            # handle bools
-            if value.lower() == 'true':
-                d[key] = True
-            elif value.lower() == 'false':
-                d[key] = False
-
-            # handle floats
-            elif re.match(r'^-?\d+\.\d+$', value):
-                d[key] = float(value)
-
-            # handle ints
-            elif re.match(r'^-?\d+$', value):
-                d[key] = int(value)
-
-            # handle lists
-            elif value.startswith('[') and value.endswith(']'):
-                items = value[1:-1].split(',')
-                d[key] = items
-
-            # handle env vars
-            elif value.startswith('@env'):
-                var = value.split("@env")[1].strip()
-                if '||' in var:
-                    env_var = var.split('||')[0].strip()
-                    default = var.split('||')[1].strip()
-                    value = os.getenv(env_var, default)
-                else:
-                    value = os.getenv(var, "")
-                d[key] = value
-            else:
-                logger.debug(value)
-                d[key] = value
-
-    def create_nested_dict(self, lst):
-        if not lst:
-            return {}
-        if len(lst) == 1:
-            return {lst[0]: {}}
-        return {lst[0]: self.create_nested_dict(lst[1:])}
-
-    def recursive_merge(self, d1, d2):
-        result = d1.copy()
-        for key, value in d2.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-                result[key] = self.recursive_merge(result[key], value)
-            else:
-                result[key] = value
-        return result
-
-    def parse(self, config_text):
-        config = {}
-        templates = {}
-        all_cfg_items = []
+    def parse_file(self, filepath):
+        result = {}
+        templates = {}  # Store template definitions
         current_section = None
-        apply_template = None
+        section_path = []
         current_template = None
-        section_header = None
+        parsing_multiline_list = False
+        multiline_list_key = None
+        multiline_list_items = []
+        parsing_multiline_comment = False
+        multiline_comment_key = None
+        multiline_comment_lines = []
 
-        lines = config_text.strip().split('\n')
+        # Regex patterns
+        section_pattern = re.compile(r'^\s*\[([^\]]*)\]\s*$')  # Matches [section] or [section.subsection]
+        template_pattern = re.compile(r'^\s*\[@template\s+([^\]]*)\]\s*$')  # Matches [@template name]
+        kv_pattern = re.compile(r'^\s*([^=]+?)\s*=\s*(.+?)\s*$')  # Matches key = value
+        use_template_pattern = re.compile(r'^\s*@use\s+([^\s]+)\s*$')  # Matches @use template_name
+        single_value_pattern = re.compile(r'^\s*([^=]+?)\s*$')  # Matches single value (no =)
+        env_var_pattern = re.compile(r'@env\s+([^\s]+)\s*\|\|?\s*\'([^\']*)\'')  # Matches @env ENV_VAR || 'fallback'
+        single_line_list_pattern = re.compile(r'^\s*-+\s*([^=].*?)\s*$')  # Matches - item1,item2 or - "quoted item"
+        multiline_list_start_pattern = re.compile(r'^\s*-+\s*$')  # Matches - (start of multi-line list)
+        list_item_pattern = re.compile(r'(?:"([^"]*)"|([^",]+))')  # Matches quoted strings or non-quoted items
+        multiline_comment_start_pattern = re.compile(r'^\s*([^=]+?)\s*=\s*"""\s*(.*)$')  # Matches key = """ with optional content
+        multiline_comment_end_pattern = re.compile(r'^\s*(.*?)\s*"""\s*$')  # Matches optional content before """
 
-        try:
-            for line in lines:
-                line = line.strip()
-                logger.info(f"line = {line}")
+        def get_type(value):
+            """checks if an integer, string, bool"""
+            logger.debug(value)
+            logger.debug(type(value))
 
-                # skip comments
-                if not line or line.startswith('#'):
+            ## String
+            if value.startswith('"') or value.startswith("'"):
+                logger.debug('STRING')
+
+                value = value.rstrip('"').rstrip("'").lstrip('"').lstrip("' ")
+                logger.warning(type(value))
+                return str(value)
+            
+            ## Integer
+            try:
+                value = int(value)
+                logger.debug(f"{value} INTO INT!!")
+                return value
+            except (TypeError, ValueError):
+                logger.warning("cant turn into int")
+                pass
+
+            logger.info("continuining to BOOL")
+            ## Boolean
+            if value in ["true", "True"]: 
+                return True
+            if value in ["false", "False"]:
+                return False
+            
+            return value
+            
+        def substitute_env_vars(value):
+            """Replace @env ENV_VAR || 'fallback' with environment variable or fallback."""
+            
+            def replace_match(match):
+                env_var = match.group(1).strip()
+                fallback = match.group(2)
+                return os.getenv(env_var, fallback)
+            logger.warning(replace_match)
+            return env_var_pattern.sub(replace_match, value)
+
+        def process_list_items(items, apply_env_vars=False):
+            """Process list items, preserving quoted strings as single elements."""
+            result = [] 
+            for item in items:
+                logger.error(item)
+                if item.startswith('"') and item.endswith('"'):
+                    item_text = item[1:-1]  # Remove quotes
+                    logger.info(f"ITEM TEXT {item_text}")
+                    if item_text:
+                        result.append(substitute_env_vars(item_text) if apply_env_vars else item_text)
+                else:
+                    logger.info(f"ITEM 10= {item}")
+                    matches = list_item_pattern.finditer(item)
+                    for match in matches:
+                        logger.debug(f"match group1 = {match.group(1)}")
+                        logger.debug(f"match group2 = {match.group(2)}")
+                        logger.debug(match)
+                        item_text = match.group(1) if match.group(1) is not None else match.group(2)
+                        item_text = item_text.strip()
+                        if item_text:
+                            logger.debug("FROM process_list_items")
+                            item_text = get_type(item_text)
+            
+                            result.append(substitute_env_vars(item_text) if apply_env_vars else item_text)
+            logger.success(result)
+            return result
+
+        def end_multiline_list():
+            """Process and store multi-line list items, then reset state."""
+            nonlocal parsing_multiline_list, multiline_list_key, multiline_list_items
+            logger.warning(multiline_list_items)
+            if multiline_list_items:
+                processed_items = process_list_items(multiline_list_items)
+                
+                if current_template is not None:
+                    current_template[multiline_list_key] = processed_items
+                elif current_section is not None:
+                    current_section[multiline_list_key] = processed_items
+            parsing_multiline_list = False
+            multiline_list_key = None
+            multiline_list_items = []
+
+        def end_multiline_comment():
+            """Process and store multiline comment, then reset state."""
+            nonlocal parsing_multiline_comment, multiline_comment_key, multiline_comment_lines
+            if multiline_comment_lines:
+                comment_text = ' '.join(line.strip() for line in multiline_comment_lines if line.strip())
+                comment_text = substitute_env_vars(comment_text)
+                if current_template is not None:
+                    current_template[multiline_comment_key] = comment_text
+                elif current_section is not None:
+                    current_section[multiline_comment_key] = comment_text
+            parsing_multiline_comment = False
+            multiline_comment_key = None
+            multiline_comment_lines = []
+
+        with open(filepath, 'r') as file:
+            for line in file:
+                # Preserve all whitespace, remove only newline characters
+                line = line.rstrip('\r\n')
+                if not line or line.startswith(';') or line.startswith('#'):
+                    continue  # Skip empty lines and comments
+
+                # Debugging: Print raw line and state
+                print(f"Line: '{line}' | Parsing comment: {parsing_multiline_comment}")
+
+                # Handle multiline comment
+                if parsing_multiline_comment:
+                    logger.info("PARSING MULTILINE COMMENT")
+                    end_comment_match = multiline_comment_end_pattern.match(line)
+                    if end_comment_match:
+                        # Capture content before """ on the closing line
+                        last_line_content = end_comment_match.group(1).strip()
+                        if last_line_content:
+                            multiline_comment_lines.append(last_line_content)
+                        print("Ending multiline comment")
+                        end_multiline_comment()
+                        continue
+                    elif section_pattern.match(line) or template_pattern.match(line):
+                        # Force end comment if a new section starts
+                        print("Forcing end of multiline comment due to new section")
+                        end_multiline_comment()
+                        # Reprocess the line as a section header
+                    else:
+                        multiline_comment_lines.append(line)
+                        continue
+
+                # Handle multi-line list items
+                if parsing_multiline_list:
+                    logger.info("PARSING Multi line list")
+                    list_item_matches = list(list_item_pattern.finditer(line))
+                    if list_item_matches and not any(p.match(line) for p in [
+                        section_pattern, template_pattern, kv_pattern, use_template_pattern, single_line_list_pattern,
+                        multiline_comment_start_pattern
+                    ]):
+                        items = [match.group(1) if match.group(1) is not None else match.group(2) for match in list_item_matches]
+                        multiline_list_items.extend([i.strip() for i in items if i.strip()])
+                        continue
+                    else:
+                        end_multiline_list()
+
+                # Check for template definition
+                template_match = template_pattern.match(line)
+                if template_match:
+                    template_name = template_match.group(1).strip()
+                    templates[template_name] = {}
+                    current_template = templates[template_name]
+                    current_section = None
+                    section_path = []
                     continue
 
-                # check if line is a section header
-                if line.startswith("[") and line.endswith("]"):
-                    # check if line is defining a template
-                    if line.find("@template") != -1:
-                        current_template = None
-                        template_name = line.split("@template")[1].strip("[]").strip()
-                        templates[template_name] = {}
-                        current_template = template_name
-                        logger.error(current_template)
-                        current_section = templates[template_name]
+                # Check for section header
+                section_match = section_pattern.match(line)
+                if section_match:
+                    section = section_match.group(1).strip()
+                    section_path = section.split('.')
+                    current_template = None
+
+                    current_section = result
+                    for part in section_path[:-1]:
+                        if part not in current_section:
+                            current_section[part] = {}
+                        elif not isinstance(current_section[part], dict):
+                            current_section[part] = {'value': current_section[part]}
+                        current_section = current_section[part]
+
+                    last_key = section_path[-1]
+                    if last_key not in current_section:
+                        current_section[last_key] = {}
+                    elif not isinstance(current_section[last_key], dict):
+                        current_section[last_key] = {'value': current_section[last_key]}
+                    current_section = current_section[last_key]
+                    continue
+
+                # Check for multiline comment start
+                comment_start_match = multiline_comment_start_pattern.match(line)
+                if comment_start_match:
+                    parsing_multiline_comment = True
+                    multiline_comment_key = comment_start_match.group(1).strip()
+                    multiline_comment_lines = []
+                    # Capture any content after """ on the same line
+                    first_line_content = comment_start_match.group(2).strip()
+                    if first_line_content:
+                        multiline_comment_lines.append(first_line_content)
+                    print(f"Starting multiline comment for key: {multiline_comment_key}")
+                    continue
+
+                # Check for key-value pair (including single-line lists)
+                kv_match = kv_pattern.match(line)
+                if kv_match:
+                    key = kv_match.group(1).strip()
+                    logger.debug("FROM paarse_file 221")
+                    value = get_type(kv_match.group(2).strip())
+
+                    logger.info(f"KV {key}:{value}")
+                    list_match = single_line_list_pattern.match(str(value))
+                    if list_match:
+                        items = [list_match.group(1)]
+                        logger.info(f"CALLING parse_file 232 process_list_itms")
+                        processed_items = process_list_items(items)
+                        #logger.error(processed_items)
+                        if current_template is not None:
+                            current_template[key] = processed_items
+                        elif current_section is not None:
+                            current_section[key] = processed_items
+                    elif multiline_list_start_pattern.match(str(value)):
+                        parsing_multiline_list = True
+                        multiline_list_key = key
+                        multiline_list_items = []
+
+                    elif env_var_pattern.match(str(value)):
+                        logger.debug("ENV VAR PATERMN")
+                        value = substitute_env_vars(value)
                     else:
+                        
+                        if current_template is not None:
+                            current_template[key] = value
+                        elif current_section is not None:
+                            current_section[key] = value
+                    continue
 
-                        # check if list
-                        if section_header:
-                            logger.debug(f"LIST section_header {section_header}")
-                            logger.debug(line)
-                            line = line.strip("[]").split(",")
-                            if '=' not in line and section_header is not None:
-                                for key in current_section.keys():
-                                    current_section[key] = line
+                # Check for @use template
+                use_template_match = use_template_pattern.match(line)
+                if use_template_match and current_section is not None:
+                    template_name = use_template_match.group(1).strip()
+                    if template_name in templates:
+                        for key, value in templates[template_name].items():
+                            if isinstance(value, list):
+                                current_section[key] = value
+                            else:
+                                current_section[key] = substitute_env_vars(value)
+                    else:
+                        print(f"Warning: Template '{template_name}' not found")
+                    continue
 
-                        # not defining a template or a List, just section header line
-                        current_template = None
-                        section_header = line.strip("[]").split(":")
-                        logger.info(f"section_header: {section_header}")
-                        keys = self.create_nested_dict(section_header)
-                        all_cfg_items.append(keys)
-                        current_section = keys
+                # Check for single value or section-level list
+                list_match = single_line_list_pattern.match(line)
+                
+                if list_match and current_section is not None and section_path:
+                    items = [list_match.group(1)]
+                    logger.info(f"ITEMS={items}")
+                    processed_items = process_list_items(items)
+                    parent_section = result
+                    for part in section_path[:-1]:
+                        parent_section = parent_section[part]
+                    parent_section[section_path[-1]] = processed_items
+                    current_section = parent_section
+                    continue
 
-#                        print_non_internal_vars()
-                # non section header line
-                else:
-                    logger.info(f"- current section {current_section}")
-                    # apply template to section
-                    if line.startswith("@use"):
-                        template_name = line[4:].strip()
-                        logger.warning(f"USING template {template_name}")
-                        if template_name in templates and current_section is not None:
-                            for template_key, template_val in templates[template_name].items():
-                                self.add_to_last_element(current_section, template_key, template_val)
+                # Check for single value
+                value_match = single_value_pattern.match(line)
+                if value_match and current_section is not None and section_path:
+                    logger.info("single VALUE")
+                    value = value_match.group(1).strip()
+                    logger.debug("FROM parse_file 283")
+                    value = get_type(substitute_env_vars(value))
 
-                    if '=' in line and current_section is not None:
-                        logger.debug(line)
-                        new_key, new_val = [part.strip() for part in line.split('=', 1)]
+                    parent_section = result
+                    
+                    for part in section_path[:-1]:
+                        parent_section = parent_section[part]
+                    parent_section[section_path[-1]] = value
+                    current_section = parent_section
+                    continue
 
-                        # drop line if key is empty
-                        if not new_key:
-                            continue
-                        # if processing a Template, add to Template dict
-                        if current_template:
-                            templates[current_template][new_key] = new_val
-                        else:
-                            #     if new_val.startswith('@raw'):
-                            #         logger.error(f"RAW RAW {new_val}")
-                            #         new_val = new_val.split('@raw')[1]
-                            #         #val = repr(val)[1:-1]
-                            #         logger.error(f"newval {new_val}")
+            # Handle any remaining multiline list or comment at EOF
+            if parsing_multiline_list:
+                end_multiline_list()
+            if parsing_multiline_comment:
+                print("Warning: Unclosed multiline comment at EOF")
+                end_multiline_comment()
+        logger.success(result)
+        return result
 
-                            # parse the section header and add keyname:keyval as a subhash
-                            self.add_to_last_element(current_section, new_key, new_val)
-
-                    # handle single key=val in form of:
-                    # [key]
-                    # val
-                    logger.success(line)
-                    logger.success(current_section)
-                    if '=' not in line and current_section is not None:
-                        for key in current_section.keys():
-                            current_section[key] = line
-#                        logger.debug(keys[0])
-                        # current_section[keys[0]] = line
-                        logger.error(current_section)
-                        logger.error(line)
-
-            merged = reduce(self.recursive_merge, all_cfg_items)
-            return merged
-
-        except (IndexError, TypeError) as err:
-            print(f"\n[ERROR] unable to parse file line: {line}\n")
-            raise Exception(str(err))
