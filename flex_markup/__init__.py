@@ -75,18 +75,25 @@ class Flex():
 
         def process_list_items(items, apply_env_vars=False):
             """Process list items, preserving quoted strings as single elements."""
-            result = []
+            result = [] 
             for item in items:
+                logger.error(item)
                 if item.startswith('"') and item.endswith('"'):
                     item_text = item[1:-1]  # Remove quotes
+                    logger.info(f"ITEM TEXT {item_text}")
                     if item_text:
                         result.append(substitute_env_vars(item_text) if apply_env_vars else item_text)
                 else:
+                    logger.info(f"ITEM 10= {item}")
                     matches = list_item_pattern.finditer(item)
                     for match in matches:
+                        logger.debug(f"match group1 = {match.group(1)}")
+                        logger.debug(f"match group2 = {match.group(2)}")
+                        logger.debug(match)
                         item_text = match.group(1) if match.group(1) is not None else match.group(2)
                         item_text = item_text.strip()
                         if item_text:
+                            logger.debug("FROM process_list_items")
                             item_text = get_type(item_text)
             
                             result.append(substitute_env_vars(item_text) if apply_env_vars else item_text)
@@ -96,9 +103,10 @@ class Flex():
         def end_multiline_list():
             """Process and store multi-line list items, then reset state."""
             nonlocal parsing_multiline_list, multiline_list_key, multiline_list_items
+            logger.warning(multiline_list_items)
             if multiline_list_items:
                 processed_items = process_list_items(multiline_list_items)
-                logger.error(processed_items)
+                
                 if current_template is not None:
                     current_template[multiline_list_key] = processed_items
                 elif current_section is not None:
@@ -154,6 +162,7 @@ class Flex():
 
                 # Handle multi-line list items
                 if parsing_multiline_list:
+                    logger.info("PARSING Multi line list")
                     list_item_matches = list(list_item_pattern.finditer(line))
                     if list_item_matches and not any(p.match(line) for p in [
                         section_pattern, template_pattern, kv_pattern, use_template_pattern, single_line_list_pattern,
@@ -215,12 +224,14 @@ class Flex():
                 kv_match = kv_pattern.match(line)
                 if kv_match:
                     key = kv_match.group(1).strip()
+                    logger.debug("FROM paarse_file 221")
                     value = get_type(kv_match.group(2).strip())
 
                     logger.info(f"KV {key}:{value}")
                     list_match = single_line_list_pattern.match(str(value))
                     if list_match:
                         items = [list_match.group(1)]
+                        logger.info(f"CALLING parse_file 232 process_list_itms")
                         processed_items = process_list_items(items)
                         #logger.error(processed_items)
                         if current_template is not None:
@@ -262,6 +273,7 @@ class Flex():
                 
                 if list_match and current_section is not None and section_path:
                     items = [list_match.group(1)]
+                    logger.info(f"ITEMS={items}")
                     processed_items = process_list_items(items)
                     parent_section = result
                     for part in section_path[:-1]:
@@ -275,6 +287,7 @@ class Flex():
                 if value_match and current_section is not None and section_path:
                     logger.info("single VALUE")
                     value = value_match.group(1).strip()
+                    logger.debug("FROM parse_file 283")
                     value = get_type(substitute_env_vars(value))
 
                     parent_section = result

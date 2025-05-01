@@ -4,7 +4,10 @@
 [spaceballs]
 title = spaceballs
 year = 1987
+fake_year = "1999"
 characters = - "Lonestar", Barf, Druish Princess, Dark Helmet
+yogurt = - '355', 299, 6000
+
 
 real_bool_true = true
 real_bool_true_2 = True
@@ -13,16 +16,27 @@ real_bool_false_2 = False
 fake_bool_true = 'true'
 fake_bool_false = "false"
 
+lucky numbers =-
+     55,
+     20951,
+     '200'
+
+
 actors = -
   "Bill Pullman",
   John Candy,
-  "26"
 
 comments = """ this is one
 funny,
 no! very...
 funny movie!!!
 """
+
+comments with single quotes = '''
+    good is bad
+  because
+      good is dumb!
+'''
 
 [spaceballs]
 power = the Schwartz
@@ -33,3 +47,9 @@ Winnebago
 
 [spaceballs]
 vehicles = French Maid
+
+[this.is.a.very.nested.subkey]
+value1
+
+[this.is.also.a.very.nested.subkey]
+value = some other value
