@@ -3,7 +3,7 @@ import os
 # from loguru import logger 
 
 class Flex():
-    
+
     def __init__(self):
         self.data = None
 
@@ -288,3 +288,6 @@ class Flex():
                 end_multiline_comment()
         return result
 
+    ## TO DO
+#    def convert_from_yaml(self, file_path):
+#        """ open YAML file and convert to a FLEX fornat, return result"""
