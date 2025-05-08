@@ -1,6 +1,15 @@
 # this is a comment
 ; this is also a comment
 
+[@template barf]
+species = mawg
+tag = my own best friend
+
+
+[@template dotmatrix]
+species = robot
+
+
 [spaceballs]
 title = spaceballs
 year = 1987
@@ -38,8 +47,11 @@ comments with single quotes = '''
       good is dumb!
 '''
 
+
 [spaceballs]
 power = the Schwartz
+@use barf
+
 
 # subkeys are separated by dot, "key.subkey"
 [spaceballs.vehicles]
@@ -47,9 +59,18 @@ Winnebago
 
 [spaceballs]
 vehicles = French Maid
+password = @env PASSWORD
+password2 = @env PASSWORD2 ||   Spaceball#1
 
 [this.is.a.very.nested.subkey]
 value1
 
 [this.is.also.a.very.nested.subkey]
 value = some other value
+
+[complex]
+string = "this is a '''complex''' string"
+
+[somekey3]
+@use barf
+@use dotmatrix

@@ -1,5 +1,5 @@
+[@template t1]
+name = @env ZZZ || kokooooo
+
 [key]
-comment = ''' funny,
-no! very...
-funny movie!!!
-'''
+@use t1

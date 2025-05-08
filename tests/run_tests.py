@@ -4,7 +4,9 @@
 import json
 import sys
 import pytest
+import os
 from os.path import dirname, join, abspath
+from loguru import logger
 
 # import repo version of dictor, not pip-installed version
 sys.path.insert(0, abspath(join(dirname(__file__), "..")))
@@ -117,35 +119,39 @@ def test_boolean_values():
     output = result['spaceballs']['fake_bool_false']
     assert output == 'false'
 
+def test_string_with_single_quote_troika():
+    """string with ''' """
+    output = result['complex']['string']
+    assert output == "this is a '''complex''' string"
 
- # test @env
- # test @template
- # test @use
+def test_env_var():
+    """test @env variable"""
+    os.environ['PASSWORD'] = 'luggage12345'
+
+    result = flex.parse_file('data.flx')
+    output = result['spaceballs']['password'] 
+    assert output == 'luggage12345'
+
+    # test fallback value
+    output = result['spaceballs']['password2'] 
+    assert output == 'Spaceball#1'
+
+def test_template_use():
+    """ @template, @use"""
+    output = result['spaceballs']['species']
+    assert output == 'mawg'
+
+    # test for multiple uses of same template
+    output = result['somekey3']['tag']
+    assert output == 'my own best friend'
+
+    # test multiple different templates
+    output = result['somekey3']['species']
+    assert output == 'robot'
+
 
  # test int to str  age = "30" << str return
 # test raising error if same key:val exists
 
 
 
-
-# def test_simple_dict():
-#     """test for value in a dictionary"""
-#     result = dictor(BASIC, "robocop.year")
-#     assert result == 1989
-
-
-# def test_non_existent_value():
-#     """test a non existent key search"""
-#     result = dictor(BASIC, "non.existent.value")
-#     assert result is None
-
-#     result = dictor({"lastname": "Doe"}, "foo.lastname")
-#     assert result is None
-
-
-# def test_zero_value():
-#     """test a Zero value - should return 0"""
-#     result = dictor(BASIC, "terminator.2.terminator 3.year", checknone=True)
-#     assert result == 0
-
-# print(json.dumps(result, ensure_ascii=False))

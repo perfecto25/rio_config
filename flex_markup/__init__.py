@@ -25,18 +25,21 @@ class Flex():
         kv_pattern = re.compile(r'^\s*([^=]+?)\s*=\s*(.+?)\s*$')  # Matches key = value
         use_template_pattern = re.compile(r'^\s*@use\s+([^\s]+)\s*$')  # Matches @use template_name
         single_value_pattern = re.compile(r'^\s*([^=]+?)\s*$')  # Matches single value (no =)
-        env_var_pattern = re.compile(r'@env\s+([^\s]+)\s*\|\|?\s*\'([^\']*)\'')  # Matches @env ENV_VAR || 'fallback'
+        #env_var_pattern = re.compile(r'@env\s+([^\s]+)\s*\|\|?\s*\'([^\']*)\'')  # Matches @env ENV_VAR || 'fallback'
+        env_var_pattern = re.compile(r'@env.*')
         single_line_list_pattern = re.compile(r'^\s*-+\s*([^=].*?)\s*$')  # Matches - item1,item2 or - "quoted item"
         multiline_list_start_pattern = re.compile(r'^\s*-+\s*$')  # Matches - (start of multi-line list)
         list_item_pattern = re.compile(r'(?:"([^"]*)"|([^",]+))')  # Matches quoted strings or non-quoted items
-        multiline_comment_start_pattern = re.compile(r'^\s*([^=]+?)\s*=\s*"""\s*(.*)$')  # Matches key = """ with optional content
-        multiline_comment_end_pattern = re.compile(r'^\s*(.*?)\s*"""\s*$')  # Matches optional content before """
+        multiline_comment_start_pattern = re.compile(r"^\s*([^=]+?)\s*=\s*'''\s*(.*)$")  # Matches key = """ with optional content
+        multiline_comment_end_pattern = re.compile(r"^\s*(.*?)\s*'''\s*$")  # Matches optional content before """
 
         def get_type(value):
             """checks if an integer, string, bool"""
             logger.debug(value)
             logger.debug(type(value))
-
+            if not value:
+                logger.warning("NONEVAL")
+                return
             ## String
             if value.startswith('"') or value.startswith("'"):
                 logger.debug('STRING')
@@ -66,44 +69,60 @@ class Flex():
         def substitute_env_vars(value):
             """Replace @env ENV_VAR || 'fallback' with environment variable or fallback."""
             
-            def replace_match(match):
-                env_var = match.group(1).strip()
-                fallback = match.group(2)
-                return os.getenv(env_var, fallback)
-            logger.warning(replace_match)
-            return env_var_pattern.sub(replace_match, value)
+            if not value:
+                return
+            if not '@env' in value:
+                return value
 
+            fallback = None
+            value = value.strip('@env').strip()
+            logger.debug(f">{value}<")
+            if '||' in value:
+                try:
+                    fallback = value.split('||')[1].strip()
+                    value = value.split('||')[0].strip()
+                    
+                except IndexError:
+                    pass
+            logger.debug(value)
+            logger.debug(fallback)
+            val = os.environ.get(value, fallback)
+            if val:
+                logger.success(f"sub env vars {val}")
+                val.strip()
+            return val
+             
         def process_list_items(items, apply_env_vars=False):
             """Process list items, preserving quoted strings as single elements."""
             result = [] 
             for item in items:
-                logger.error(item)
+             #   logger.error(item)
                 if item.startswith('"') and item.endswith('"'):
                     item_text = item[1:-1]  # Remove quotes
-                    logger.info(f"ITEM TEXT {item_text}")
+              #      logger.info(f"ITEM TEXT {item_text}")
                     if item_text:
                         result.append(substitute_env_vars(item_text) if apply_env_vars else item_text)
                 else:
-                    logger.info(f"ITEM 10= {item}")
+               #     logger.info(f"ITEM 10= {item}")
                     matches = list_item_pattern.finditer(item)
                     for match in matches:
-                        logger.debug(f"match group1 = {match.group(1)}")
-                        logger.debug(f"match group2 = {match.group(2)}")
-                        logger.debug(match)
+                        # logger.debug(f"match group1 = {match.group(1)}")
+                        # logger.debug(f"match group2 = {match.group(2)}")
+                        # logger.debug(match)
                         item_text = match.group(1) if match.group(1) is not None else match.group(2)
                         item_text = item_text.strip()
                         if item_text:
-                            logger.debug("FROM process_list_items")
+                #            logger.debug("FROM process_list_items")
                             item_text = get_type(item_text)
             
                             result.append(substitute_env_vars(item_text) if apply_env_vars else item_text)
-            logger.success(result)
+            #logger.success(result)
             return result
 
         def end_multiline_list():
             """Process and store multi-line list items, then reset state."""
             nonlocal parsing_multiline_list, multiline_list_key, multiline_list_items
-            logger.warning(multiline_list_items)
+           # logger.warning(multiline_list_items)
             if multiline_list_items:
                 processed_items = process_list_items(multiline_list_items)
                 
@@ -115,12 +134,11 @@ class Flex():
             multiline_list_key = None
             multiline_list_items = []
 
-        def end_multiline_comment():
+        def end_multiline_comment():    
             """Process and store multiline comment, then reset state."""
             nonlocal parsing_multiline_comment, multiline_comment_key, multiline_comment_lines
             if multiline_comment_lines:
                 comment_text = ' '.join(line.strip() for line in multiline_comment_lines if line.strip())
-                comment_text = substitute_env_vars(comment_text)
                 if current_template is not None:
                     current_template[multiline_comment_key] = comment_text
                 elif current_section is not None:
@@ -136,8 +154,11 @@ class Flex():
                 if not line or line.startswith(';') or line.startswith('#'):
                     continue  # Skip empty lines and comments
 
+                # clean up multiline comments convert to single quote troika
+                line = line.replace('"""', "'''")
+
                 # Debugging: Print raw line and state
-                print(f"Line: '{line}' | Parsing comment: {parsing_multiline_comment}")
+                logger.info(f"Line: '{line}' | Parsing comment: {parsing_multiline_comment}")
 
                 # Handle multiline comment
                 if parsing_multiline_comment:
@@ -149,20 +170,26 @@ class Flex():
                         if last_line_content:
                             multiline_comment_lines.append(last_line_content)
                         print("Ending multiline comment")
+                        logger.success(multiline_comment_lines)
                         end_multiline_comment()
+                        logger.debug(multiline_comment_lines)
                         continue
                     elif section_pattern.match(line) or template_pattern.match(line):
                         # Force end comment if a new section starts
                         print("Forcing end of multiline comment due to new section")
                         end_multiline_comment()
+                        logger.debug(multiline_comment_lines)
                         # Reprocess the line as a section header
                     else:
                         multiline_comment_lines.append(line)
+                        logger.debug(multiline_comment_lines)
                         continue
+                    
+
 
                 # Handle multi-line list items
                 if parsing_multiline_list:
-                    logger.info("PARSING Multi line list")
+             #       logger.info("PARSING Multi line list")
                     list_item_matches = list(list_item_pattern.finditer(line))
                     if list_item_matches and not any(p.match(line) for p in [
                         section_pattern, template_pattern, kv_pattern, use_template_pattern, single_line_list_pattern,
@@ -224,14 +251,14 @@ class Flex():
                 kv_match = kv_pattern.match(line)
                 if kv_match:
                     key = kv_match.group(1).strip()
-                    logger.debug("FROM paarse_file 221")
+              #      logger.debug("FROM paarse_file 221")
                     value = get_type(kv_match.group(2).strip())
-
-                    logger.info(f"KV {key}:{value}")
+                    logger.info(f"VALUE 249 {value}")
+               #     logger.info(f"KV {key}:{value}")
                     list_match = single_line_list_pattern.match(str(value))
                     if list_match:
                         items = [list_match.group(1)]
-                        logger.info(f"CALLING parse_file 232 process_list_itms")
+                #        logger.info(f"CALLING parse_file 232 process_list_itms")
                         processed_items = process_list_items(items)
                         #logger.error(processed_items)
                         if current_template is not None:
@@ -244,8 +271,13 @@ class Flex():
                         multiline_list_items = []
 
                     elif env_var_pattern.match(str(value)):
-                        logger.debug("ENV VAR PATERMN")
+                        logger.debug(f"ENV VAR PATERMN - 262 value: {value}")
                         value = substitute_env_vars(value)
+                        logger.debug(value)
+                        if current_template is not None:
+                            current_template[key] = value
+                        elif current_section is not None:
+                            current_section[key] = value
                     else:
                         
                         if current_template is not None:
@@ -259,10 +291,13 @@ class Flex():
                 if use_template_match and current_section is not None:
                     template_name = use_template_match.group(1).strip()
                     if template_name in templates:
+                        logger.warning(templates)
                         for key, value in templates[template_name].items():
                             if isinstance(value, list):
                                 current_section[key] = value
                             else:
+                                logger.debug(f"@USE {key} : {value}]")
+
                                 current_section[key] = substitute_env_vars(value)
                     else:
                         print(f"Warning: Template '{template_name}' not found")
@@ -288,7 +323,8 @@ class Flex():
                     logger.info("single VALUE")
                     value = value_match.group(1).strip()
                     logger.debug("FROM parse_file 283")
-                    value = get_type(substitute_env_vars(value))
+                    if '@env' in line:
+                        value = get_type(substitute_env_vars(value))
 
                     parent_section = result
                     
