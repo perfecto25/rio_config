@@ -60,7 +60,25 @@ To create an array, pass a dash followed by a comma separated list of values
     # equals 
     {"My List": ["first", "second", "third"]}
 
+Arrays can also be created using a multiline declaration
 
+    [cars]
+    names = -
+      toyota,
+      ferrari,
+      chevy
+
+
+    ## results in
+    {
+  "cars": {
+    "names": [
+      "toyota",
+      "ferrari",
+      "chevy"
+    ]
+  }
+}
 
 --- 
 

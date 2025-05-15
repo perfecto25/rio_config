@@ -1,16 +1,5 @@
-#    [My List]
-#    - first, second, third
-
-
-    [@template company]
-    name = Initech
-    address = 123 company drive
-    phone = 200-301-4050
-
-    [employees.Joe]
-    @use company
-    department = sales
-
-    [employees.Bill]
-    @use company
-    department = engineering
+    [cars]
+    names = -
+      toyota,
+      ferrari,
+      chevy
