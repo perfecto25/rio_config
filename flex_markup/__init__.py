@@ -1,6 +1,7 @@
 import re
 import os
-# from loguru import logger 
+#from loguru import logger
+
 
 class Flex():
 
@@ -125,33 +126,33 @@ class Flex():
 
         with open(filepath, 'r') as file:
             for line in file:
-                # Preserve all whitespace, remove only newline characters
+                ## Preserve all whitespace, remove only newline characters
                 line = line.rstrip('\r\n')
                 if not line or line.startswith(';') or line.startswith('#'):
                     continue  # Skip empty lines and comments
 
-                # clean up multiline comments convert to single quote troika
+                ## clean up multiline comments convert to single quote troika
                 line = line.replace('"""', "'''")
                 
-                # Handle multiline comment
+                ## Handle multiline comment
                 if parsing_multiline_comment:
                     end_comment_match = multiline_comment_end_pattern.match(line)
                     if end_comment_match:
-                        # Capture content before """ on the closing line
+                        ## Capture content before """ on the closing line
                         last_line_content = end_comment_match.group(1).strip()
                         if last_line_content:
                             multiline_comment_lines.append(last_line_content)                    
                         end_multiline_comment()
                         continue
                     elif section_pattern.match(line) or template_pattern.match(line):
-                        # Force end comment if a new section starts
+                        ## Force end comment if a new section starts
                         end_multiline_comment()
-                        # Reprocess the line as a section header
+                        ## Reprocess the line as a section header
                     else:
                         multiline_comment_lines.append(line)
                         continue
 
-                # Handle multi-line list items
+                ## Handle multi-line list items
                 if parsing_multiline_list:
                     list_item_matches = list(list_item_pattern.finditer(line))
                     if list_item_matches and not any(p.match(line) for p in [
@@ -164,7 +165,7 @@ class Flex():
                     else:
                         end_multiline_list()
 
-                # Check for template definition
+                ## Check for template definition
                 template_match = template_pattern.match(line)
                 if template_match:
                     template_name = template_match.group(1).strip()
@@ -176,9 +177,18 @@ class Flex():
 
                 # Check for section header
                 section_match = section_pattern.match(line)
+                
                 if section_match:
                     section = section_match.group(1).strip()
-                    section_path = section.split('.')
+                    ## treat single and dbl quoted parent keys as single value
+                    if any([
+                        section.startswith('"') and section.endswith('"'),
+                        section.startswith("'") and section.endswith("'")
+                        ]):
+                        section = section.strip('"').strip("'")
+                        section_path = [section]
+                    else:
+                        section_path = section.split('.')
                     current_template = None
                     current_section = result
                     for part in section_path[:-1]:

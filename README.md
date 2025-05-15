@@ -27,9 +27,12 @@ Flex can handle the following types
 
 To create a basic key:value pair, you need a Header block (key)
 
+
     [Key]
     Value
-
+  
+  ie, 
+  
     [Name]
     Joe 
 
@@ -45,10 +48,61 @@ To created a nested hash
 
     # equals {"Employee": {"Name": "Joe"}}
 
-To create an array
+---
+
+### Arrays
+
+To create an array, pass a dash followed by a comma separated list of values
 
     [My List]
-    [first, second, third]
+    - first, second, third
+
+    # equals 
+    {"My List": ["first", "second", "third"]}
+
+
+
+--- 
+
+### Templates
+
+Templates allow you to reuse configuration data without copying and pasting the same data over and over.
+
+for example, lets say you want to add some Company-specific data to every Employee
+
+    [@template company]
+    name = Initech
+    address = 123 company drive
+    phone = 200-301-4050
+
+    [employees.Joe]
+    @use company
+    department = sales
+
+    [employees.Bill]
+    @use company
+    department = engineering
+
+    ## results in
+
+    {
+      "employees": {
+        "Joe": {
+          "name": "Initech",
+          "address": "123 company drive",
+          "phone": "200-301-4050",
+          "department": "sales"
+        },
+        "Bill": {
+          "name": "Initech",
+          "address": "123 company drive",
+          "phone": "200-301-4050",
+          "department": "engineering"
+        }
+      }
+    }
+
+  
 
 @use - use template (must match template name)
 
@@ -131,3 +185,6 @@ pip install pytest
 
 shell> cd tests
 shell> pytest -sv tests/run_tests.py
+
+## TO DO:
+

@@ -1,5 +1,16 @@
-[@template t1]
-name = @env ZZZ || kokooooo
+#    [My List]
+#    - first, second, third
 
-[key]
-@use t1
+
+    [@template company]
+    name = Initech
+    address = 123 company drive
+    phone = 200-301-4050
+
+    [employees.Joe]
+    @use company
+    department = sales
+
+    [employees.Bill]
+    @use company
+    department = engineering

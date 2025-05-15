@@ -91,7 +91,9 @@ def test_subkey_values():
     subkey2 = val
     """
     output = result['spaceballs']['vehicles']
-    assert output == 'French Maid'
+    assert output == 'Winnebago'
+    output = result['spaceballs']['car']
+    assert output == 'Mercedes'
 
 
 def test_deep_nested_single_value_hash():
@@ -149,6 +151,10 @@ def test_template_use():
     output = result['somekey3']['species']
     assert output == 'robot'
 
+def test_parent_key_with_dots():
+    """ if parent key has dots and single or double quotes, treat as single key"""
+    output = result['subkey.with.dots.doublequote']
+    assert output == 'evil will triump because good is dumb!'
 
  # test int to str  age = "30" << str return
 # test raising error if same key:val exists

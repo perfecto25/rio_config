@@ -15,3 +15,4 @@ if __name__ == "__main__":
  #  print(result["check"]["filesystem"])
     #logger.debug(type(result))
     print(json.dumps(result, ensure_ascii=False))
+    

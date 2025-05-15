@@ -58,7 +58,8 @@ power = the Schwartz
 Winnebago
 
 [spaceballs]
-vehicles = French Maid
+tech = French Maid
+car = "Mercedes"
 password = @env PASSWORD
 password2 = @env PASSWORD2 ||   Spaceball#1
 
@@ -67,6 +68,12 @@ value1
 
 [this.is.also.a.very.nested.subkey]
 value = some other value
+
+["subkey.with.dots.doublequote"]
+evil will triump because good is dumb!
+
+["subkey.with.dots.singlequote"]
+this also works
 
 [complex]
 string = "this is a '''complex''' string"
