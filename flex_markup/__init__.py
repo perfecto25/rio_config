@@ -1,6 +1,6 @@
 import re
 import os
-#from loguru import logger
+# from loguru import logger
 
 
 class Flex():
@@ -180,15 +180,23 @@ class Flex():
                 
                 if section_match:
                     section = section_match.group(1).strip()
-                    ## treat single and dbl quoted parent keys as single value
-                    if any([
-                        section.startswith('"') and section.endswith('"'),
-                        section.startswith("'") and section.endswith("'")
-                        ]):
-                        section = section.strip('"').strip("'")
-                        section_path = [section]
-                    else:
-                        section_path = section.split('.')
+                    escaped = False
+                    ## check if escape char is in key header
+                    if "\." in section:
+                        section = section.replace('\.', '__flx_markup_escape__')
+                        escaped = True
+
+
+                    section_path = section.split('.')
+                    
+                    ## reassamble escaped notation
+                    if escaped:
+                        for path in section_path:
+                            if '__flx_markup_escape__' in path:
+                                index = section_path.index(path)
+                                path = path.replace('__flx_markup_escape__', '.')
+                                section_path[index] = path
+
                     current_template = None
                     current_section = result
                     for part in section_path[:-1]:

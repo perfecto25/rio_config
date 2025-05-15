@@ -1,6 +1,6 @@
 {
   
-  "workbench.colorTheme": "Solarized Light",
+  "workbench.colorTheme": "Monokai",
   "workbench.iconTheme": "vscode-icons",
   "workbench.editor.languageDetection": true,
   "editor.mouseWheelZoom": true,

@@ -69,11 +69,6 @@ value1
 [this.is.also.a.very.nested.subkey]
 value = some other value
 
-["subkey.with.dots.doublequote"]
-evil will triump because good is dumb!
-
-["subkey.with.dots.singlequote"]
-this also works
 
 [complex]
 string = "this is a '''complex''' string"
@@ -81,3 +76,6 @@ string = "this is a '''complex''' string"
 [somekey3]
 @use barf
 @use dotmatrix
+
+[key1.key2\.still-key2.key3]
+some value

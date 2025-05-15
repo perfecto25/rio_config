@@ -151,10 +151,13 @@ def test_template_use():
     output = result['somekey3']['species']
     assert output == 'robot'
 
-def test_parent_key_with_dots():
-    """ if parent key has dots and single or double quotes, treat as single key"""
-    output = result['subkey.with.dots.doublequote']
-    assert output == 'evil will triump because good is dumb!'
+
+def test_escape_character():
+    """ test skipping key splitting by a dot if theres an escape char """
+
+    output = result['key1']['key2.still-key2']['key3']
+    assert output == 'some value'
+    
 
  # test int to str  age = "30" << str return
 # test raising error if same key:val exists

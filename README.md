@@ -48,6 +48,55 @@ To created a nested hash
 
     # equals {"Employee": {"Name": "Joe"}}
 
+To create a deep hash structure, add a key block declaration of all top keys and a final value, separated by a dot
+
+Flex will create all parent subkeys along the path
+
+    [first.second.third]
+    fourth = value
+
+    ## result
+
+    {
+    "first": {
+      "second": {
+        "third": {
+          "fourth": "value"
+          }
+        }
+      }
+    }
+
+You can also provide a value to the last key directly
+
+    [first.second.third]
+    value
+
+    ## result
+    
+    {
+      "first": {
+        "second": {
+          "third": "value"
+        }
+      }
+    }
+
+if the top level key has dot in its name, you can escape parsing it with an escape character '\\.'
+
+    [first.second\.level.third]
+    value
+
+    ## result
+
+    {
+      "first": {
+        "second.level": {
+          "third": "value"
+        }
+      }
+    }
+
 ---
 
 ### Arrays
@@ -57,10 +106,16 @@ To create an array, pass a dash followed by a comma separated list of values
     [My List]
     - first, second, third
 
-    # equals 
-    {"My List": ["first", "second", "third"]}
+    ## result 
+    {
+      "My List": [
+        "first", 
+        "second", 
+        "third"
+      ]
+    }
 
-Arrays can also be created using a multiline declaration
+Arrays can also be created using a multiline declaration starting with a dash
 
     [cars]
     names = -
@@ -69,22 +124,31 @@ Arrays can also be created using a multiline declaration
       chevy
 
 
-    ## results in
+    ## result
     {
-  "cars": {
-    "names": [
-      "toyota",
-      "ferrari",
-      "chevy"
-    ]
-  }
-}
+      "cars": {
+        "names": [
+        "toyota",
+        "ferrari",
+        "chevy"
+        ]
+      }
+    }
 
 --- 
 
 ### Templates
 
 Templates allow you to reuse configuration data without copying and pasting the same data over and over.
+
+Templates are created by using the @template keyword
+
+[**@template** TemplateName] declares a new template, followed by template variables
+
+**@use** keyword then instructs the key block to use the variables from the given template, ie
+
+    @use myTemplate
+
 
 for example, lets say you want to add some Company-specific data to every Employee
 
@@ -101,7 +165,7 @@ for example, lets say you want to add some Company-specific data to every Employ
     @use company
     department = engineering
 
-    ## results in
+    ## result:
 
     {
       "employees": {
@@ -120,66 +184,45 @@ for example, lets say you want to add some Company-specific data to every Employ
       }
     }
 
-  
+to overwrite a template's variable with a custom value, simply provide a new variable with same name
 
-@use - use template (must match template name)
+for example, if I want Bill's phone number to be 111-111-1111 instead of the phone number from the template, I can add a new variable called "phone" which will override the previous value coming from the template
 
-@template - create new template
+    [@template company]
+    name = Initech
+    address = 123 company drive
+    phone = 200-301-4050
 
+    [employees.Joe]
+    @use company
+    department = sales
 
-    [@template red]
-    from-red-template = this is a red value
+    [employees.Bill]
+    @use company
+    department = engineering
+    phone = 111-111-1111  
 
-    [@template blue]
-    from-blue-template = this is a blue value
-
-    [Flowers:species:rose]
-    @use red
-    roses = are red
-
-    [Flowers:species:violet]
-    @use blue
-    violets = are blue
-
-    [Flowers:species:tulip]
-    @use red
-    tulips = are red too!
-    
-    >>
-
+    ## result 
     {
-      "Flowers": {
-        "species": {
-          "rose": {
-            "from-red-template": "this is a red value",
-            "roses": "are red"
-          },
-          "violet": {
-            "from-blue-template": "this is a blue value",
-            "violets": "are blue"
-          },
-          "tulip": {
-            "from-red-template": "this is a red value",
-            "tulips": "are red too!"
-          }
+      "employees": {
+        "Joe": {
+          "name": "Initech",
+          "address": "123 company drive",
+          "phone": "200-301-4050",
+          "department": "sales"
+        },
+        "Bill": {
+          "name": "Initech",
+          "address": "123 company drive",
+          "phone": "111-111-1111",
+          "department": "engineering"
         }
       }
     }
 
+---
 
-
-deep hash
-
-```
-[check:filesystem:home]
-name = "/home"
-
-[check:filesystem:opt]
-name = "/opt"
-
-```
-
-### Using environment variables
+### Environment Variables
 
 to process a shell environment variable, provide @env flag
 
