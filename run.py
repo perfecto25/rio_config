@@ -12,7 +12,7 @@ if __name__ == "__main__":
     result = flex.parse_file(file)
 
 #   
-    print(result)
+    #print(result)
     #logger.debug(type(result))
-    #print(json.dumps(result, ensure_ascii=False))
+    print(json.dumps(result, ensure_ascii=False))
     

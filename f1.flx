@@ -1,14 +1,26 @@
 
 
-[spaceballs]
+["key1.key2.name"]
+k = v
+j = p
 
+state = "=running"
+comment = """
+this 
+is  a 
+comment
 
-drinks
+header"""
 
-# comm
-[spaceballs]
-newkey
+mylist = [a,x,e]
 
-## comm
-[red]  # comm
-blue
+[first\.name.real]
+name = joe
+
+[last\.name.real]
+name = [a,b,c]
+
+['x.y.z']
+age = "3"
+intage = 4
+
