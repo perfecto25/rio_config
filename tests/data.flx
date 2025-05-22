@@ -11,12 +11,15 @@ species = robot
 
 
 [spaceballs]
-title = spaceballs
+title = "Spaceballs The Movie"
 year = 1987
 fake_year = "1999"
-characters = - "Lonestar", Barf, Druish Princess, Dark Helmet
-yogurt = - '355', 299, 6000
-
+characters = -- Lonestar, Barf, Druish Princess, Dark Helmet
+yogurt = -- '355', 299, 6000
+drink = "=perri air"
+many_drinks = --
+  perriair,
+  "=milk"
 
 real_bool_true = true
 real_bool_true_2 = True
@@ -25,13 +28,13 @@ real_bool_false_2 = False
 fake_bool_true = 'true'
 fake_bool_false = "false"
 
-lucky numbers =-
+lucky numbers =--
      55,
      20951,
      '200'
 
 
-actors = -
+actors = --
   "Bill Pullman",
   John Candy,
 
@@ -48,8 +51,8 @@ comments with single quotes = '''
 '''
 
 
-[spaceballs]
-power = the Schwartz
+[spaceballs.power]
+the Schwartz
 @use barf
 
 

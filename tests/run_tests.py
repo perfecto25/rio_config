@@ -8,6 +8,7 @@ import os
 from os.path import dirname, join, abspath
 from loguru import logger
 
+
 # import repo version of dictor, not pip-installed version
 sys.path.insert(0, abspath(join(dirname(__file__), "..")))
 from flex_markup import Flex
@@ -18,11 +19,12 @@ try:
 except Exception as error:
     raise Exception(error)
 
+logger.warning(result)
 
 def test_string_return():
     """test for basic string return"""
     output = result['spaceballs']['title']
-    assert output == "spaceballs"
+    assert output == "Spaceballs The Movie"
 
 
 def test_int_return():
@@ -157,6 +159,13 @@ def test_escape_character():
 
     output = result['key1']['key2.still-key2']['key3']
     assert output == 'some value'
+    
+
+def test_equal_sign_in_string():
+    """ test parsing key,val in string that contains = """
+
+    output = result['spaceballs']['drink']
+    assert output == '=perri air'
     
 
  # test int to str  age = "30" << str return
