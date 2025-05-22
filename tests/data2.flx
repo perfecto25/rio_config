@@ -1,0 +1,25 @@
+# comment
+
+[test1]
+name = Test1
+
+["test2"]
+name = Test 2
+sub = this is a subkey
+
+sub2 = another subkey
+
+
+
+[test3\.feature.header\.subkey]
+name = escape character
+
+[test4.this.is.a.very.nested.subkey]
+name = Test4
+
+['test5.subkey.blah']
+name = Test5
+
+[test6]
+int year = 1986
+string year = "1986"
