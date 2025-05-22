@@ -4,7 +4,10 @@
 import json
 import sys
 import pytest
+import os
 from os.path import dirname, join, abspath
+from loguru import logger
+
 
 # import repo version of dictor, not pip-installed version
 sys.path.insert(0, abspath(join(dirname(__file__), "..")))
@@ -16,11 +19,12 @@ try:
 except Exception as error:
     raise Exception(error)
 
+logger.warning(result)
 
 def test_string_return():
     """test for basic string return"""
     output = result['spaceballs']['title']
-    assert output == "spaceballs"
+    assert output == "Spaceballs The Movie"
 
 
 def test_int_return():
@@ -89,7 +93,9 @@ def test_subkey_values():
     subkey2 = val
     """
     output = result['spaceballs']['vehicles']
-    assert output == 'French Maid'
+    assert output == 'Winnebago'
+    output = result['spaceballs']['car']
+    assert output == 'Mercedes'
 
 
 def test_deep_nested_single_value_hash():
@@ -117,35 +123,53 @@ def test_boolean_values():
     output = result['spaceballs']['fake_bool_false']
     assert output == 'false'
 
+def test_string_with_single_quote_troika():
+    """string with ''' """
+    output = result['complex']['string']
+    assert output == "this is a '''complex''' string"
 
- # test @env
- # test @template
- # test @use
+def test_env_var():
+    """test @env variable"""
+    os.environ['PASSWORD'] = 'luggage12345'
+
+    result = flex.parse_file('data.flx')
+    output = result['spaceballs']['password'] 
+    assert output == 'luggage12345'
+
+    # test fallback value
+    output = result['spaceballs']['password2'] 
+    assert output == 'Spaceball#1'
+
+def test_template_use():
+    """ @template, @use"""
+    output = result['spaceballs']['species']
+    assert output == 'mawg'
+
+    # test for multiple uses of same template
+    output = result['somekey3']['tag']
+    assert output == 'my own best friend'
+
+    # test multiple different templates
+    output = result['somekey3']['species']
+    assert output == 'robot'
+
+
+def test_escape_character():
+    """ test skipping key splitting by a dot if theres an escape char """
+
+    output = result['key1']['key2.still-key2']['key3']
+    assert output == 'some value'
+    
+
+def test_equal_sign_in_string():
+    """ test parsing key,val in string that contains = """
+
+    output = result['spaceballs']['drink']
+    assert output == '=perri air'
+    
 
  # test int to str  age = "30" << str return
 # test raising error if same key:val exists
 
 
 
-
-# def test_simple_dict():
-#     """test for value in a dictionary"""
-#     result = dictor(BASIC, "robocop.year")
-#     assert result == 1989
-
-
-# def test_non_existent_value():
-#     """test a non existent key search"""
-#     result = dictor(BASIC, "non.existent.value")
-#     assert result is None
-
-#     result = dictor({"lastname": "Doe"}, "foo.lastname")
-#     assert result is None
-
-
-# def test_zero_value():
-#     """test a Zero value - should return 0"""
-#     result = dictor(BASIC, "terminator.2.terminator 3.year", checknone=True)
-#     assert result == 0
-
-# print(json.dumps(result, ensure_ascii=False))

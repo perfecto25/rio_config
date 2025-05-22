@@ -27,9 +27,12 @@ Flex can handle the following types
 
 To create a basic key:value pair, you need a Header block (key)
 
+
     [Key]
     Value
-
+  
+  ie, 
+  
     [Name]
     Joe 
 
@@ -45,69 +48,181 @@ To created a nested hash
 
     # equals {"Employee": {"Name": "Joe"}}
 
-To create an array
+To create a deep hash structure, add a key block declaration of all top keys and a final value, separated by a dot
 
-    [My List]
-    [first, second, third]
+Flex will create all parent subkeys along the path
 
-@use - use template (must match template name)
+    [first.second.third]
+    fourth = value
 
-@template - create new template
-
-
-    [@template red]
-    from-red-template = this is a red value
-
-    [@template blue]
-    from-blue-template = this is a blue value
-
-    [Flowers:species:rose]
-    @use red
-    roses = are red
-
-    [Flowers:species:violet]
-    @use blue
-    violets = are blue
-
-    [Flowers:species:tulip]
-    @use red
-    tulips = are red too!
-    
-    >>
+    ## result
 
     {
-      "Flowers": {
-        "species": {
-          "rose": {
-            "from-red-template": "this is a red value",
-            "roses": "are red"
-          },
-          "violet": {
-            "from-blue-template": "this is a blue value",
-            "violets": "are blue"
-          },
-          "tulip": {
-            "from-red-template": "this is a red value",
-            "tulips": "are red too!"
+    "first": {
+      "second": {
+        "third": {
+          "fourth": "value"
           }
         }
       }
     }
 
+You can also provide a value to the last key directly
+
+    [first.second.third]
+    value
+
+    ## result
+    
+    {
+      "first": {
+        "second": {
+          "third": "value"
+        }
+      }
+    }
+
+if the top level key has dot in its name, you can escape parsing it with an escape character '\\.'
+
+    [first.second\.level.third]
+    value
+
+    ## result
+
+    {
+      "first": {
+        "second.level": {
+          "third": "value"
+        }
+      }
+    }
+
+---
+
+### Arrays
+
+To create an array, pass a dash followed by a comma separated list of values
+
+    [My List]
+    - first, second, third
+
+    ## result 
+    {
+      "My List": [
+        "first", 
+        "second", 
+        "third"
+      ]
+    }
+
+Arrays can also be created using a multiline declaration starting with a dash
+
+    [cars]
+    names = -
+      toyota,
+      ferrari,
+      chevy
 
 
-deep hash
+    ## result
+    {
+      "cars": {
+        "names": [
+        "toyota",
+        "ferrari",
+        "chevy"
+        ]
+      }
+    }
 
-```
-[check:filesystem:home]
-name = "/home"
+--- 
 
-[check:filesystem:opt]
-name = "/opt"
+### Templates
 
-```
+Templates allow you to reuse configuration data without copying and pasting the same data over and over.
 
-### Using environment variables
+Templates are created by using the @template keyword
+
+[**@template** TemplateName] declares a new template, followed by template variables
+
+**@use** keyword then instructs the key block to use the variables from the given template, ie
+
+    @use myTemplate
+
+
+for example, lets say you want to add some Company-specific data to every Employee
+
+    [@template company]
+    name = Initech
+    address = 123 company drive
+    phone = 200-301-4050
+
+    [employees.Joe]
+    @use company
+    department = sales
+
+    [employees.Bill]
+    @use company
+    department = engineering
+
+    ## result:
+
+    {
+      "employees": {
+        "Joe": {
+          "name": "Initech",
+          "address": "123 company drive",
+          "phone": "200-301-4050",
+          "department": "sales"
+        },
+        "Bill": {
+          "name": "Initech",
+          "address": "123 company drive",
+          "phone": "200-301-4050",
+          "department": "engineering"
+        }
+      }
+    }
+
+to overwrite a template's variable with a custom value, simply provide a new variable with same name
+
+for example, if I want Bill's phone number to be 111-111-1111 instead of the phone number from the template, I can add a new variable called "phone" which will override the previous value coming from the template
+
+    [@template company]
+    name = Initech
+    address = 123 company drive
+    phone = 200-301-4050
+
+    [employees.Joe]
+    @use company
+    department = sales
+
+    [employees.Bill]
+    @use company
+    department = engineering
+    phone = 111-111-1111  
+
+    ## result 
+    {
+      "employees": {
+        "Joe": {
+          "name": "Initech",
+          "address": "123 company drive",
+          "phone": "200-301-4050",
+          "department": "sales"
+        },
+        "Bill": {
+          "name": "Initech",
+          "address": "123 company drive",
+          "phone": "111-111-1111",
+          "department": "engineering"
+        }
+      }
+    }
+
+---
+
+### Environment Variables
 
 to process a shell environment variable, provide @env flag
 
@@ -131,3 +246,6 @@ pip install pytest
 
 shell> cd tests
 shell> pytest -sv tests/run_tests.py
+
+## TO DO:
+

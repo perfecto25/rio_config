@@ -1,13 +1,25 @@
 # this is a comment
 ; this is also a comment
 
+[@template barf]
+species = mawg
+tag = my own best friend
+
+
+[@template dotmatrix]
+species = robot
+
+
 [spaceballs]
-title = spaceballs
+title = "Spaceballs The Movie"
 year = 1987
 fake_year = "1999"
-characters = - "Lonestar", Barf, Druish Princess, Dark Helmet
-yogurt = - '355', 299, 6000
-
+characters = -- Lonestar, Barf, Druish Princess, Dark Helmet
+yogurt = -- '355', 299, 6000
+drink = "=perri air"
+many_drinks = --
+  perriair,
+  "=milk"
 
 real_bool_true = true
 real_bool_true_2 = True
@@ -16,13 +28,13 @@ real_bool_false_2 = False
 fake_bool_true = 'true'
 fake_bool_false = "false"
 
-lucky numbers =-
+lucky numbers =--
      55,
      20951,
      '200'
 
 
-actors = -
+actors = --
   "Bill Pullman",
   John Candy,
 
@@ -38,18 +50,35 @@ comments with single quotes = '''
       good is dumb!
 '''
 
-[spaceballs]
-power = the Schwartz
+
+[spaceballs.power]
+the Schwartz
+@use barf
+
 
 # subkeys are separated by dot, "key.subkey"
 [spaceballs.vehicles]
 Winnebago
 
 [spaceballs]
-vehicles = French Maid
+tech = French Maid
+car = "Mercedes"
+password = @env PASSWORD
+password2 = @env PASSWORD2 ||   Spaceball#1
 
 [this.is.a.very.nested.subkey]
 value1
 
 [this.is.also.a.very.nested.subkey]
 value = some other value
+
+
+[complex]
+string = "this is a '''complex''' string"
+
+[somekey3]
+@use barf
+@use dotmatrix
+
+[key1.key2\.still-key2.key3]
+some value
