@@ -24,7 +24,6 @@ class Flex():
         for section, content in sections:
             all_sections.append((section, content))
     
-
         # parse each section
         ret = {}
 

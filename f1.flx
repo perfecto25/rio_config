@@ -1,26 +1,26 @@
+#
+#
+#["key1.key2.name"]
+#k = v
+#j = p
+#
+#state = "=running"
+#comment = """
+#this 
+#is  a 
+#comment
+#
+#header"""
 
+#mylist = [a,x,e]
+#
+#[first\.name.real]
+#name = joe
+#
+#[last\.name.real]
+#name = [a,b,c]
 
-["key1.key2.name"]
-k = v
-j = p
-
-state = "=running"
-comment = """
-this 
-is  a 
-comment
-
-header"""
-
-mylist = [a,x,e]
-
-[first\.name.real]
-name = joe
-
-[last\.name.real]
-name = [a,b,c]
-
-['x.y.z']
+[key1]
 age = "3"
 intage = 4
 

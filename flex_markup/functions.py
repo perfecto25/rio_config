@@ -2,15 +2,16 @@ import re
 import os
 import sys
 from loguru import logger 
-
+  
 def remove_whitespace(text):
     """Removes all whitespace characters from a string."""
     return re.sub(r"\s+", "", text)
 
+
 def create_nested_dict(lst):
     if not lst:
         return {}
-    if len(lst) == 1:
+    if len(lst) == 1:  
         return {lst[0]: {}}
     return {lst[0]: create_nested_dict(lst[1:])}
 
@@ -64,7 +65,8 @@ def add_to_last_element(d, key, value):
     }
 
     """
-
+    logger.info(f"getting {key}:{value}")
+    logger.info(f"D = {d}")
     # Check if the current element is a dictionary
     if isinstance(d, dict):
         for sub_key in d:
@@ -72,7 +74,10 @@ def add_to_last_element(d, key, value):
             add_to_last_element(d[sub_key], key, value)
     else:
         # Base case: If it's not a dictionary, return
-        return
+        #logger.info("from add to last element, NONE")
+        #d[key] = value
+    
+        return 
 
     # If the current dictionary has no further nested dictionaries, add the key-value pair
     if all(not isinstance(v, dict) for v in d.values()):
@@ -152,14 +157,21 @@ def parse_section(key, val, ret):
     # process section values and convert to k=v structure
     multiline_comment = False 
     multiline_list = False
-
+    logger.debug(f"section_dict = {section_dict}")
     ## split section Value into valsections delimited by key = value
     pattern = r'^\s*(\w+)\s*=\s*(.*?)\s*(?=(?:\n\s*\w+\s*=|\Z))'
     sections = re.findall(pattern, val, re.MULTILINE | re.DOTALL)
-    logger.info(sections)
+    logger.debug(sections)
 
+    for section_key in section_dict.keys():
+        logger.error(section_keys)
     for section in sections:
-        logger.info(section)
+        k = section[0]
+        v = get_type(section[1])
+        logger.info(f"KV = {k}:{v}")
+        logger.debug(f"SectionDict = {section_dict}")
+        section_dict = add_to_last_element(section_dict, k, v)
+    logger.success(section_dict)
         #current_val = check_kv_pattern(key, value, section_dict)
     # sys.exit()
 
