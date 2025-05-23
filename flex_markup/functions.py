@@ -9,6 +9,7 @@ def remove_whitespace(text):
 
 
 def create_nested_dict(lst):
+    logger.info(f"LST {lst}")
     if not lst:
         return {}
     if len(lst) == 1:  
@@ -120,8 +121,24 @@ def check_kv_pattern(line, section_dict, multiline_comment=False, multiline_list
     else:
         return []
 
+def add_to_deepest_dict(d, new_key, new_value):
+    def find_deepest(d, current_depth=0, max_depth=[0], target=[None]):
+        is_leaf_dict = True
+        for key, value in d.items():
+            if isinstance(value, dict):
+                is_leaf_dict = False
+                find_deepest(value, current_depth + 1, max_depth, target)
+        if is_leaf_dict and current_depth >= max_depth[0]:
+            max_depth[0] = current_depth
+            target[0] = d
     
-
+    target = [None]
+    max_depth = [0]
+    find_deepest(d, 0, max_depth, target)
+    if target[0] is not None:
+        target[0][new_key] = new_value
+    elif not d:
+        d[new_key] = new_value
 
 def parse_section(key, val, ret):
     """generate return dict with section's keys and values"""
@@ -164,13 +181,16 @@ def parse_section(key, val, ret):
     logger.debug(sections)
 
     for section_key in section_dict.keys():
-        logger.error(section_keys)
+        logger.error(section_key)
     for section in sections:
         k = section[0]
         v = get_type(section[1])
         logger.info(f"KV = {k}:{v}")
         logger.debug(f"SectionDict = {section_dict}")
-        section_dict = add_to_last_element(section_dict, k, v)
+
+        logger.debug(section_dict.keys())
+        add_to_deepest_dict(section_dict, k, v)
+        #section_dict = add_to_last_element(section_dict, k, v)
     logger.success(section_dict)
         #current_val = check_kv_pattern(key, value, section_dict)
     # sys.exit()

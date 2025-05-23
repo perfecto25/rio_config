@@ -24,3 +24,6 @@
 age = "3"
 intage = 4
 
+[key1.key2]
+name = joe
+
