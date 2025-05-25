@@ -49,11 +49,16 @@ mylist = [
 another list = [ x, y, z, 2,]
 
 [test11]
-mycomment = """ this is 
+comment1 = """ this is 
 a 
 multiline
 comment
 """
+
+comment2 = '''also a 
+multiline
+comment
+'''
 
 
 [@template tmp1]
@@ -69,4 +74,21 @@ new_name = from template 2
 @use = tmp1
 name = from test12
 @use = tmp2
+
+[test13]
+value = abc
+
+[test13]
+value = xyz
+
+[test14]
+real_bool_true = true
+real_bool_true_2 = True
+real_bool_false = false
+real_bool_false_2 = False
+fake_bool_true = 'true'
+fake_bool_false = "false"
+
+[test15.subkey1]
+subkey2 = value
 

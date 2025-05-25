@@ -75,7 +75,8 @@ def test10_multiline_list_return():
 
 def test11_multiline_comment():
     """ test comments spanning multiple lines"""
-    assert result["test11"]["mycomment"] == "this is \na \nmultiline\ncomment\n"
+    assert result["test11"]["comment1"] == "this is \na \nmultiline\ncomment\n"
+    assert result["test11"]["comment2"] == "also a \nmultiline\ncomment\n"
 
 def test12_template_usage():
     """using template variables inside a block"""
@@ -83,96 +84,41 @@ def test12_template_usage():
     assert result["test12"]["templ_list"] == ["this", "list", 99]
     assert result["test12"]["new_name"] == "from template 2"
 
-# def test_int_multiline_list_return():
-#     """test for basic int inside a multiline list """
-#     output = result['spaceballs']['lucky numbers'][1]
-#     assert output == 20951
+def test13_same_parent_key_in_separate_cfg_block():
+    """
+    test getting value for an existing parent key in a different configuration block
+    2nd identical block should overwrite the 1st
+    
+    """
+    assert result["test13"]["value"] == "xyz"
 
-# def test_fake_int_return():
-#     """test a fake int (string)"""
-#     #output = result['spaceballs']['actors'][2]
-#     #assert output == '26'
-#     output = result["spaceballs"]["fake_year"]
-#     assert output == '1999'
+def test14_boolean_values():
+    """
+    test return of bools: true, false True, False
 
-# def test_fake_int_list_return():
-#     """test a fake int inside a list (string)"""
-#     output = result['spaceballs']['lucky numbers'][2]
-#     assert output == '200'
+    """
+    assert result['test14']['real_bool_true'] == True
+    assert result['test14']['real_bool_true_2'] == True
+    assert result['test14']['real_bool_false'] == False
+    assert result['test14']['real_bool_false_2'] == False
+    assert result['test14']['fake_bool_true'] == 'true'
+    assert result['test14']['fake_bool_false'] == 'false'
 
-# def test_list_return():
-#     """test for basic list return"""
-#     output = result['spaceballs']['characters']
-#     assert output == ['Lonestar', 'Barf', 'Druish Princess', 'Dark Helmet']
+def test15_subkey_values():
+    """
+    test subkey values
 
-
-# def test_multiline_list_return():
-#     """ tests for list definition spanning multiple lines """
-
-
-# def test_same_parent_key_in_separate_cfg_block():
-#     """
-#     test getting value for an existing parent key in a different configuration block
-
-#     [key1]
-#     subkey1 = val1
-
-#     [key1]
-#     subkey2 = val2
-
-#     """
-#     output = result['spaceballs']['power']
-#     assert output == 'the Schwartz'
+    [key.subkey]
+    subkey2 = val
+    """
+    assert result['test15']['subkey1']['subkey2'] == 'value'
+    
 
 
-# def test_multiline_string():
-#     """test for getting correct contents of multi-line strings"""
-#     output = result['spaceballs']['comments']
-#     assert output == "this is one funny, no! very... funny movie!!!"
-
-
-# def test_subkey_values():
-#     """
-#     test subkey values
-
-#     [key.subkey]
-#     subkey2 = val
-#     """
-#     output = result['spaceballs']['vehicles']
-#     assert output == 'Winnebago'
-#     output = result['spaceballs']['car']
-#     assert output == 'Mercedes'
-
-
-# def test_deep_nested_single_value_hash():
-#     """ deep nested hash with a single value """
-#     output = result['this']['is']['a']['very']['nested']['subkey']
-#     assert output == 'value1'
-
-# def test_deep_nested_key_val_hash():
-#     """ deep nested hash key val"""
-
-#     output = result['this']['is']['also']['a']['very']['nested']['subkey']['value']
-#     assert output == 'some other value'
-
-# def test_boolean_values():
-#     """
-#     test return of bools: true, false True, False
-
-#     """
-#     output = result['spaceballs']['real_bool_true']
-#     assert output == True
-
-#     output = result['spaceballs']['fake_bool_true']
-#     assert output == 'true'
-
-#     output = result['spaceballs']['fake_bool_false']
-#     assert output == 'false'
-
-# def test_string_with_single_quote_troika():
-#     """string with ''' """
-#     output = result['complex']['string']
-#     assert output == "this is a '''complex''' string"
+def test16_string_with_single_quote_troika():
+    """string with ''' """
+    output = result['complex']['string']
+    assert output == "this is a '''complex''' string"
 
 # def test_env_var():
 #     """test @env variable"""
