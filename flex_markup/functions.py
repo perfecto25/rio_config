@@ -1,8 +1,10 @@
 import re
 import os
 import sys
-from loguru import logger 
-  
+from loguru import logger
+import ast
+
+
 def remove_whitespace(text):
     """Removes all whitespace characters from a string."""
     return re.sub(r"\s+", "", text)
@@ -12,7 +14,7 @@ def create_nested_dict(lst):
     logger.info(f"LST {lst}")
     if not lst:
         return {}
-    if len(lst) == 1:  
+    if len(lst) == 1:
         return {lst[0]: {}}
     return {lst[0]: create_nested_dict(lst[1:])}
 
@@ -22,13 +24,41 @@ def get_type(value):
     if not value:
         return
     logger.info(value)
-    ## String
+
+    # List
+    if value.startswith('[') and value.endswith(']') and ',' in value:
+        logger.info(f"value is list >> {value}")
+        value = value.strip("[").strip("]").strip()
+        value = ''.join(value.split()).split(',')
+        # for val in value:
+        #     if any([val.startswith('"'), val.startswith("'")]) and any([val.endswith('"'), val.endswith("'")]):
+        #         logger.debug("ANY")
+        #         val = val.strip('"').strip("'")
+        #         val = str(val)
+        #     logger.debug(val)
+        #     #val.replace("'", '"')
+        # logger.success(val)
+
+        # if integer is quoted, keep it a string
+
+        # value = [x.strip('"') if x.startswith('"') else x for x in value]
+
+        # if integer not quoted, turn it into int
+        value = [int(x) if x.isdigit() else x for x in value]
+        value = [x.strip('"') if not type(x) is int and x.startswith('"') else x for x in value]
+        value = [x.strip("'") if not type(x) is int and x.startswith("'") else x for x in value]
+        # remove empty elements, keep zeros
+        value = [x for x in value if x is not None and x != '' and x != []]
+
+        return value
+
+    # String
     if value.startswith('"') or value.startswith("'"):
         logger.info("STR ")
         value = str(value).rstrip('"').rstrip("'").lstrip('"').lstrip("' ")
         return value
-    
-    ## Integer
+
+    # Integer
     try:
         value = int(value)
         logger.success(value)
@@ -36,17 +66,28 @@ def get_type(value):
     except (TypeError, ValueError):
         pass
 
-    ## Boolean
-    if value in ["true", "True"]: 
+    # Boolean
+    if value in ["true", "True"]:
         return True
     if value in ["false", "False"]:
         return False
 
-    ## Float
+    # Float
     if re.match(r'^-?\d+\.\d+$', value):
         return float(value)
-    
+
     return value
+
+
+def deep_merge_pipe(dict1, dict2):
+    result = dict1.copy()
+    for key, value in dict2.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge_pipe(result[key], value)
+        else:
+            result[key] = value
+    return result
+
 
 def add_to_last_element(d, key, value):
     """ 
@@ -75,10 +116,10 @@ def add_to_last_element(d, key, value):
             add_to_last_element(d[sub_key], key, value)
     else:
         # Base case: If it's not a dictionary, return
-        #logger.info("from add to last element, NONE")
-        #d[key] = value
-    
-        return 
+        # logger.info("from add to last element, NONE")
+        # d[key] = value
+
+        return
 
     # If the current dictionary has no further nested dictionaries, add the key-value pair
     if all(not isinstance(v, dict) for v in d.values()):
@@ -103,23 +144,6 @@ def add_to_last_element(d, key, value):
         #     logger.debug(value)
         #     d[key] = value
 
-def check_kv_pattern(line, section_dict, multiline_comment=False, multiline_list=False):
-    """checks if given value is in key=value pattern"""
-    kv_pattern = re.compile(r'^\s*([^=]+?)\s*=\s*(.+?)\s*$')  # Matches key = value
-    kv_match = kv_pattern.match(line)
-    if kv_match:
-        logger.error(section_dict)
-        multiline_comment = False
-        multiline_list = False
-        key = kv_match.group(1).strip()
-        value = kv_match.group(2).strip()
-        logger.debug(f"VALUE {value}")
-        value = get_type(value)
-      
-        section_dict = add_to_last_element(section_dict, key, value)
-        return [section_dict, multiline_comment, multiline_list]
-    else:
-        return []
 
 def add_to_deepest_dict(d, new_key, new_value):
     def find_deepest(d, current_depth=0, max_depth=[0], target=[None]):
@@ -131,7 +155,7 @@ def add_to_deepest_dict(d, new_key, new_value):
         if is_leaf_dict and current_depth >= max_depth[0]:
             max_depth[0] = current_depth
             target[0] = d
-    
+
     target = [None]
     max_depth = [0]
     find_deepest(d, 0, max_depth, target)
@@ -140,80 +164,44 @@ def add_to_deepest_dict(d, new_key, new_value):
     elif not d:
         d[new_key] = new_value
 
-def parse_section(key, val, ret):
-    """generate return dict with section's keys and values"""
-    
-    section_dict = {}
-    
 
-    # check header key is quoted, strip quotes
-    if (key.startswith('"') and key.endswith('"')) or (key.startswith("'") and key.endswith("'")):
-        quote_char = key[:1]
-        key = key.rstrip(quote_char).lstrip(quote_char)
-        section_dict[key] = {}
-    
-    # check for escape char
-    if r"\." in key and not section_dict:
-        # generate keylist by replaceing escape dot with escape placeholder
-        # to be able to split by actual dots
-        key = key.replace(r'\.', '__flx__')
-        keylist = key.split('.')
+def set_nested_dict(ret, key_string, value):
+    keys = key_string.split(".")
+    logger.info(f"keys = {keys}")
+    current = ret
 
-        # regenerate keylist and re-substitute eschape placeholder with escape dot
-        keylist = [item.replace('__flx__', '.') for item in keylist]
-        section_dict = create_nested_dict(keylist)
+    # Navigate or create nested dictionaries up to the second-to-last key
+    for k in keys[:-1]:
+        logger.info(f"k = {k}")
+        # If the key doesn't exist, create an empty dictionary
+        if k not in current:
+            logger.error(f"current={current}")
+            current[k] = {}
+        current = current[k]
 
-    # generate dict with header subkeys ie [key1.key2.key3]
-    if '.' in key and not section_dict:
-        keylist = key.split('.')
-        section_dict = create_nested_dict(keylist)
-    
-    if not section_dict:
-        section_dict[key] = {}
-
-    # process section values and convert to k=v structure
-    multiline_comment = False 
-    multiline_list = False
-    logger.debug(f"section_dict = {section_dict}")
-    ## split section Value into valsections delimited by key = value
-    pattern = r'^\s*(\w+)\s*=\s*(.*?)\s*(?=(?:\n\s*\w+\s*=|\Z))'
-    sections = re.findall(pattern, val, re.MULTILINE | re.DOTALL)
-    logger.debug(sections)
-
-    for section_key in section_dict.keys():
-        logger.error(section_key)
-    for section in sections:
-        k = section[0]
-        v = get_type(section[1])
-        logger.info(f"KV = {k}:{v}")
-        logger.debug(f"SectionDict = {section_dict}")
-
-        logger.debug(section_dict.keys())
-        add_to_deepest_dict(section_dict, k, v)
-        #section_dict = add_to_last_element(section_dict, k, v)
-    logger.success(section_dict)
-        #current_val = check_kv_pattern(key, value, section_dict)
-    # sys.exit()
-
-    # for line in val.split('\n'):
-    #     if not line or line.startswith('#') or line.isspace():
-    #         logger.success(f"skipping {line}")
-    #         continue
-    #     line = line.rstrip('\r\n')  ## remove newline chars
-    #     line = line.replace('\t', ' ') ## replace tabs w spaces
-
-    #     current_val = check_kv_pattern(line, section_dict, multiline_comment=multiline_comment, multiline_list=multiline_list)
-    #     if current_val:
-    #         logger.debug(current_val)
-    #     logger.debug(line)
+    # Set the value at the final key
+    logger.debug(current)
+    logger.debug(current[keys[-1]])
+    current[keys[-1]] = value
 
 
-
-    logger.warning(section_dict)
-    ret = ret|section_dict
-    # if key not in ret:
-    #     ret[key] = {}
-    
-    
-
-    return ret
+def get_key(sections, ret):
+    for key, content in sections:
+        # check header key is quoted, strip quotes
+        if (key.startswith('"') and key.endswith('"')) or (key.startswith("'") and key.endswith("'")):
+            quote_char = key[:1]
+            key = key.rstrip(quote_char).lstrip(quote_char)
+            ret[key] = {}
+        # check for escape char
+        if r"\." in key and not ret:
+            # generate keylist by replaceing escape dot with escape placeholder
+            # to be able to split by actual dots
+            key = key.replace(r'\.', '__flx__')
+            keylist = key.split('.')
+            # regenerate keylist and re-substitute eschape placeholder with escape dot
+            keylist = [item.replace('__flx__', '.') for item in keylist]
+            ret = create_nested_dict(keylist)
+            # generate dict with header subkeys ie [key1.key2.key3]
+        if '.' in key:
+            keylist = key.split('.')
+            ret = create_nested_dict(keylist)

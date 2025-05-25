@@ -7,8 +7,9 @@ name = Test1
 name = Test 2
 sub = this is a subkey
 
-sub2 = another subkey
+# comment line
 
+sub2 = another subkey
 
 
 [test3\.feature.header\.subkey]
@@ -23,3 +24,27 @@ name = Test5
 [test6]
 int year = 1986
 string year = "1986"
+
+["test7.abc"]
+name = "this = name"
+double = 'this == double'
+
+[test8]
+mylist = [ a, b, c]
+
+[test9]
+fakelist = "[ this is a fake \ list ]"
+
+[test10]
+mylist = [
+  a,
+  b,
+  c,
+  0,
+  1,
+  '2',
+  "3"
+]
+
+another list = [ x, y, z, 2,]
+

@@ -5,8 +5,9 @@ import json
 import sys
 import pytest
 import os
-from os.path import dirname, join, abspath
 from loguru import logger
+from os.path import dirname, join, abspath
+
 
 
 # import repo version of dictor, not pip-installed version
@@ -54,11 +55,23 @@ def test6_stringified_int_return():
     """test for int as a string return"""
     assert result['test6']['string year'] == "1986"
 
+def test7_equal_sign_in_config():
+    """test for config value having equal sign"""
+    assert result['test7.abc']['name'] == "this = name"
+    assert result['test7.abc']['double'] == "this == double"
 
-# def test_int_singleline_list_return():
-#     """ test for basic int inside single line list """
-#     output = result["spaceballs"]["yogurt"][0]
-#     assert output == "355"
+def test8_singleline_list_return():
+    """ test for basic single line list """
+    assert result["test8"]["mylist"] == ['a', 'b', 'c']
+
+def test9_brackets_in_config_value():
+    """ test for string brackets, ie fake list """
+    assert result["test9"]["fakelist"] == r"[ this is a fake \ list ]"
+
+def test10_multiline_list_return():
+    """ test for multi line list """
+    assert result["test10"]["mylist"] == ['a', 'b', 'c', 1]
+    assert result["test10"]["another list"] == ['x', 'y', 'z', 2]
 
 # def test_int_multiline_list_return():
 #     """test for basic int inside a multiline list """
