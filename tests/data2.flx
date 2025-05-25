@@ -39,7 +39,7 @@ fakelist = "[ this is a fake \ list ]"
 mylist = [
   a,
   b,
-  c,
+  c,      
   0,
   1,
   '2',
@@ -47,4 +47,26 @@ mylist = [
 ]
 
 another list = [ x, y, z, 2,]
+
+[test11]
+mycomment = """ this is 
+a 
+multiline
+comment
+"""
+
+
+[@template tmp1]
+comment = from template1  
+
+templ_list = [this, list, 99]
+
+[@template tmp2]
+new_name = from template 2
+
+
+[test12]
+@use = tmp1
+name = from test12
+@use = tmp2
 

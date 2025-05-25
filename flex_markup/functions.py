@@ -2,13 +2,16 @@ import re
 import os
 import sys
 from loguru import logger
-import ast
 
 
-def remove_whitespace(text):
-    """Removes all whitespace characters from a string."""
-    return re.sub(r"\s+", "", text)
 
+def check_syntax(content):
+    """ parses all lines and errors out on bad syntax """
+    for line in content.split('\n'):
+        if "@use" in line and not "=" in line:
+            raise Exception(f"""
+            @use declaration must be in form of '@use = MyTemplateName'
+            check for missing equal sign on this line >>> {line}""")
 
 def create_nested_dict(lst):
     logger.info(f"LST {lst}")

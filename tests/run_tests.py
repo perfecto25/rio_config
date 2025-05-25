@@ -70,8 +70,18 @@ def test9_brackets_in_config_value():
 
 def test10_multiline_list_return():
     """ test for multi line list """
-    assert result["test10"]["mylist"] == ['a', 'b', 'c', 1]
+    assert result["test10"]["mylist"] == ['a', 'b', 'c', 0, 1, "2", "3"]
     assert result["test10"]["another list"] == ['x', 'y', 'z', 2]
+
+def test11_multiline_comment():
+    """ test comments spanning multiple lines"""
+    assert result["test11"]["mycomment"] == "this is \na \nmultiline\ncomment\n"
+
+def test12_template_usage():
+    """using template variables inside a block"""
+    assert result["test12"]["comment"] == "from template1"
+    assert result["test12"]["templ_list"] == ["this", "list", 99]
+    assert result["test12"]["new_name"] == "from template 2"
 
 # def test_int_multiline_list_return():
 #     """test for basic int inside a multiline list """
