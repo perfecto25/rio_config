@@ -311,6 +311,34 @@ result will contain all your template variables
 
 ---
 
+### Multiline Comments
+
+comments or text spanning multiple lines can be written using the single quote troika
+
+    [mycomment]
+    comment = '''
+    this 
+    is 
+    a comment
+    that    spans
+
+    many
+
+    lines
+    '''
+
+  result
+
+    {
+    "mycomment": {
+      "comment": "\nthis \nis \na comment\nthat    spans\n\nmany\n\nlines\n"
+      }
+    }
+
+
+
+---
+
 ### Environment Variables
 
 to process a shell environment variable, provide @env flag
