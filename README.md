@@ -2,7 +2,7 @@
 
 Flex is a markup language for use in common configuration scenarios.
 
-It is similar to TOML in concept, but is unique in its approach to handling variables and configuration data
+It is similar to TOML and YAML in concept, but is unique in its approach to handling variables and configuration data
 
 ## Features
 - no spacing requirements (ie, 2 spaces in YAML)
@@ -11,6 +11,8 @@ It is similar to TOML in concept, but is unique in its approach to handling vari
 - clean and simple syntax to describe complex data structures
 - ability to create template blocks for repeated options
 - can natively ingest shell environment variables at runtime, including fallback values
+- ability to created nested hashes without excessive notation and spacing
+
 
 
 ## Usage
@@ -18,6 +20,7 @@ It is similar to TOML in concept, but is unique in its approach to handling vari
 Flex can handle the following types
 
 - strings
+- hashes
 - ints
 - floats
 - booleans
@@ -25,7 +28,7 @@ Flex can handle the following types
 
 
 
-To create a basic key:value pair, you need a Header block (key)
+To create a basic key:value pair, you need a Header block (top key or Parent key)
 
 
     [Key]
@@ -67,20 +70,6 @@ Flex will create all parent subkeys along the path
       }
     }
 
-You can also provide a value to the last key directly
-
-    [first.second.third]
-    value
-
-    ## result
-    
-    {
-      "first": {
-        "second": {
-          "third": "value"
-        }
-      }
-    }
 
 if the top level key has dot in its name, you can escape parsing it with an escape character '\\.'
 
@@ -97,41 +86,89 @@ if the top level key has dot in its name, you can escape parsing it with an esca
       }
     }
 
+If the Parent key has dots in the name and you want to keep it as single key, double quote the parent key
+
+    ["parent.key.separated.by.dot"]
+    subkey = value
+
+    ## result
+
+    {
+      "parent.key.separated.by.dot": {
+        "subkey": "value"
+      }
+    }
+
+
 ---
 
 ### Arrays
 
-To create an array, pass a dash followed by a comma separated list of values
+To create an array, declare it using brackets, with each element separated by a comma
 
     [My List]
-    - first, second, third
+    subkey = [first, second, third]
 
     ## result 
     {
-      "My List": [
-        "first", 
-        "second", 
-        "third"
-      ]
+      "My List": {
+        "subkey": [
+          "first",
+          "second",
+          "third"
+        ]
+      }
     }
 
-Arrays can also be created using a multiline declaration starting with a dash
+Arrays can also be created using a multiline declaration within a bracket pair
 
     [cars]
-    names = -
+    names = [
       toyota,
       ferrari,
       chevy
+    ]
 
 
     ## result
     {
       "cars": {
         "names": [
-        "toyota",
-        "ferrari",
-        "chevy"
+          "toyota",
+          "ferrari",
+          "chevy"
         ]
+      }
+    }
+
+---
+
+### Strings, Ints, Booleans, Floats
+
+Flex will evaluate each value for its type, ie strings, ints, floats, booleans
+
+By default, all values are strings, unless its a raw integer. To treat an integer as a string, double quote it
+
+    [variables]
+    string = this is a string
+    real int = 12345
+    stringified int = "12345"
+    boolean true = True
+    boolean false = False
+    boolean strinfigied = "True"
+    float = 2.34596
+
+    ## result
+
+    {
+      "variables": {
+        "string": "this is a string",
+        "real int": 12345,
+        "stringified int": "12345",
+        "boolean true": true,
+        "boolean false": false,
+        "boolean strinfigied": "True",
+        "float": 2.34596
       }
     }
 
@@ -158,11 +195,11 @@ for example, lets say you want to add some Company-specific data to every Employ
     phone = 200-301-4050
 
     [employees.Joe]
-    @use company
+    @use = company
     department = sales
 
     [employees.Bill]
-    @use company
+    @use = company
     department = engineering
 
     ## result:

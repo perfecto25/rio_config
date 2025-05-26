@@ -1,26 +1,91 @@
-# this is a comment
-; this is also a comment
+# comment
 
-[@template barf]
-species = mawg
-tag = my own best friend
+[test1]
+name = Test1
+
+["test2"]
+name = Test 2
+sub = this is a subkey
+
+# comment line
+
+sub2 = another subkey
 
 
-[@template dotmatrix]
-species = robot
+[test3\.feature.header\.subkey]
+name = escape character
+
+[test4.this.is.a.very.nested.subkey]
+name = Test4
+
+['test5.subkey.blah']
+name = Test5
+
+[test6]
+int year = 1986
+string year = "1986"
+
+["test7.abc"]
+name = "this = name"
+double = 'this == double'
+
+[test8]
+mylist = [ a, b, c]
+
+[test9]
+fakelist = "[ this is a fake \ list ]"
+
+[test10]
+mylist = [
+  a,
+  b,
+  c,      
+  0,
+  1,
+  '2',
+  "3"
+]
+
+another list = [ x, y, z, 2,]
+
+[test11]
+comment1 = """ this is 
+a 
+multiline
+comment
+"""
+
+comment2 = '''also a 
+multiline
+comment
+'''
 
 
-[spaceballs]
-title = "Spaceballs The Movie"
-year = 1987
-fake_year = "1999"
-characters = -- Lonestar, Barf, Druish Princess, Dark Helmet
-yogurt = -- '355', 299, 6000
-drink = "=perri air"
-many_drinks = --
-  perriair,
-  "=milk"
+[@template tmp1]
+comment = from template 1  
 
+templ_list = [this, list, 99]
+
+[@template tmp2]
+new_name = from template 2
+
+
+[test12]
+@use = tmp1
+name = from test12
+@use = tmp2
+
+[test12a]
+@use = tmp2
+
+
+[test13]
+value = abc
+
+[test13]
+value = xyz
+
+[test14]
 real_bool_true = true
 real_bool_true_2 = True
 real_bool_false = false
@@ -28,57 +93,23 @@ real_bool_false_2 = False
 fake_bool_true = 'true'
 fake_bool_false = "false"
 
-lucky numbers =--
-     55,
-     20951,
-     '200'
+[test15.subkey1]
+subkey2 = value
 
+[test16]
+string = this is a '''complex''' string
 
-actors = --
-  "Bill Pullman",
-  John Candy,
-
-comments = """ this is one
-funny,
-no! very...
-funny movie!!!
-"""
-
-comments with single quotes = '''
-    good is bad
-  because
-      good is dumb!
-'''
-
-
-[spaceballs.power]
-the Schwartz
-@use barf
-
-
-# subkeys are separated by dot, "key.subkey"
-[spaceballs.vehicles]
-Winnebago
-
-[spaceballs]
-tech = French Maid
-car = "Mercedes"
-password = @env PASSWORD
+[test17]
+password = @env PASSWORD 
+password with fallback = @env FAKE_ENV_VAR || xyz789
+no var = @env FAKE_ENV_VAR  
 password2 = @env PASSWORD2 ||   Spaceball#1
 
-[this.is.a.very.nested.subkey]
-value1
+[test18]
+drink = "=perri air"
 
-[this.is.also.a.very.nested.subkey]
-value = some other value
+     [test19.first]
+     with spaces = true
 
-
-[complex]
-string = "this is a '''complex''' string"
-
-[somekey3]
-@use barf
-@use dotmatrix
-
-[key1.key2\.still-key2.key3]
-some value
+     [test19.second]
+     with spaces = true
