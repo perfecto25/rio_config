@@ -51,6 +51,7 @@ To created a nested hash
 
     # equals {"Employee": {"Name": "Joe"}}
 
+### Basic Dictionary/Hash
 To create a deep hash structure, add a key block declaration of all top keys and a final value, separated by a dot
 
 Flex will create all parent subkeys along the path
@@ -58,7 +59,7 @@ Flex will create all parent subkeys along the path
     [first.second.third]
     fourth = value
 
-    ## result
+  result
 
     {
     "first": {
@@ -71,12 +72,13 @@ Flex will create all parent subkeys along the path
     }
 
 
+### Escape Character
 if the top level key has dot in its name, you can escape parsing it with an escape character '\\.'
 
     [first.second\.level.third]
     value
 
-    ## result
+  result
 
     {
       "first": {
@@ -86,12 +88,13 @@ if the top level key has dot in its name, you can escape parsing it with an esca
       }
     }
 
+### Single Key
 If the Parent key has dots in the name and you want to keep it as single key, double quote the parent key
 
     ["parent.key.separated.by.dot"]
     subkey = value
 
-    ## result
+  result
 
     {
       "parent.key.separated.by.dot": {
@@ -130,7 +133,8 @@ Arrays can also be created using a multiline declaration within a bracket pair
     ]
 
 
-    ## result
+  result
+
     {
       "cars": {
         "names": [
@@ -158,7 +162,7 @@ By default, all values are strings, unless its a raw integer. To treat an intege
     boolean strinfigied = "True"
     float = 2.34596
 
-    ## result
+  result
 
     {
       "variables": {
@@ -184,7 +188,7 @@ Templates are created by using the @template keyword
 
 **@use** keyword then instructs the key block to use the variables from the given template, ie
 
-    @use myTemplate
+    @use = myTemplate
 
 
 for example, lets say you want to add some Company-specific data to every Employee
@@ -202,7 +206,7 @@ for example, lets say you want to add some Company-specific data to every Employ
     @use = company
     department = engineering
 
-    ## result:
+  result:
 
     {
       "employees": {
@@ -231,15 +235,16 @@ for example, if I want Bill's phone number to be 111-111-1111 instead of the pho
     phone = 200-301-4050
 
     [employees.Joe]
-    @use company
+    @use = company
     department = sales
 
     [employees.Bill]
-    @use company
+    @use = company
     department = engineering
     phone = 111-111-1111  
 
-    ## result 
+  result 
+
     {
       "employees": {
         "Joe": {
@@ -257,6 +262,53 @@ for example, if I want Bill's phone number to be 111-111-1111 instead of the pho
       }
     }
 
+You can also combine multiple templates in one config block
+
+    [@template evens]
+    even_numbers = [2,4,6,8]
+
+    [@template odds]
+    odd_numbers = [1,3,5,7]
+
+    [@template words]
+    hello = world
+    bunch of words = [
+      sunflower,
+      gunpowder,
+      beer
+    ]
+
+    [combined stuff]
+    @use = evens
+    @use = odds
+    @use = words
+
+result will contain all your template variables
+
+    {
+      "combined stuff": {
+        "even_numbers": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "odd_numbers": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hello": "world",
+        "bunch of words": [
+          "sunflower",
+          "gunpowder",
+          "beer"
+        ]
+      }
+    }
+
+
 ---
 
 ### Environment Variables
@@ -273,8 +325,26 @@ to pass a default fallback value if env variable isnt set, provide a default usi
     [database.credential]
     password = @env DB_PASSWORD || abracadabra123
 
+result
 
-this will use "abracadabra123" as the fallback value
+    {
+    "database": {
+      "credential": {
+        "password": "abracadabra123"
+        }
+      }
+    }
+
+    export DB_PASSWORD="cheese-is-yummy991"
+
+    {
+    "database": {
+      "credential": {
+        "password": "cheese-is-yummy991"
+        }
+      }
+    }
+
 
 
 ## Testing 
