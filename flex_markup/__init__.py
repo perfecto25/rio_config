@@ -19,7 +19,7 @@ class Flex():
 
         # Find all sections
         sections = re.findall(section_pattern, cleaned_content, re.MULTILINE)
-
+        logger.debug(f"sections={sections}")
         ret = {}
         templates = {}
 
@@ -59,6 +59,19 @@ class Flex():
 
             pattern = r'^\s*\[([^\]\[\\]+)\]\s*$|^\s*([^=]+?)\s*=\s*((?:\"\"\".*?(?:\"\"\")|\[.*?\]|\S.*?)(?=\s*(?:\n\s*[^=]+\s*=|\n\s*\[|\Z)))'
             subsections = re.findall(pattern, content, re.MULTILINE | re.DOTALL)
+            logger.warning(content)
+
+            if not subsections:
+                if not content:
+                    # check if its direct parent key = list
+                    pattern = r'-?\d*\.?\d+|-?\d+|[a-zA-Z]'
+                    matches = re.findall(pattern, content)
+
+                value = get_type(content.strip('\n'))
+                keys_dict[key] = value
+                ret = deep_merge_pipe(ret, keys_dict)
+                continue
+
             sub_key = None
             for match in subsections:
                 if match[0]:  # section header

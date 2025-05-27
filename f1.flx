@@ -1,11 +1,2 @@
 [mycomment]
-comment = '''
-this 
-is 
-a comment
-that    spans
-
-many
-
-lines
-'''
+[a,b,c]
