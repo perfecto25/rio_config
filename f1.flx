@@ -1,2 +1,8 @@
-[mycomment]
-[a,b,c]
+serve: 
+[
+  /robots.txt,
+  /favicon.ico,
+  *.html,
+  *.png,
+  !.git
+]

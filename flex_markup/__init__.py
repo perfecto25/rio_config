@@ -2,12 +2,15 @@
 import re
 from loguru import logger
 from .functions import create_nested_dict, \
-    get_type, add_to_last_element, deep_merge_pipe, check_syntax, get_env_var, remove_use_keys
-
+    get_type, add_to_last_element, deep_merge_pipe, check_syntax, get_env_var, remove_use_keys, set_last_key
+import sys
 
 class Flex():
     def parse_config(self, file_content):
-
+        
+        ret = {}
+        templates = {}
+        
         # remove comments and emtpy lines
         cleaned_content = re.sub(r'^\s*#.*$(?:\n|$)', '', file_content, flags=re.MULTILINE)
 
@@ -15,23 +18,41 @@ class Flex():
         cleaned_content = check_syntax(cleaned_content)
 
         # Regex to match entire sections (e.g., [key1] followed by key-value pairs)
-        section_pattern = r'\[([^\]]+)\]\s*((?:(?!\[[^\]]*\][^=]*=).*\n*)*?)(?=\[|$|\Z)'
+        #section_pattern = r'\[([^\]]+)\]\s*((?:(?!\[[^\]]*\][^=]*=).*\n*)*?)(?=\[|$|\Z)'
+        #pattern = r'^("?[^"\n]*"?):\s*((?:(?!^"?[^"\n]*"?).*\n*)*?)(?=(?:^"?[^"\n]*"?:|\Z))'
+        #section_pattern = r'^([a-zA-Z0-9_.]+):\s*$'
+        #pattern = r'^(?P<key>(["\'].*?["\'])|(@?[a-zA-Z0-9_. ]+)):\s*$'
+        #pattern = r'^(?P<key>(["\'].*?["\'])|(@?(?:\\.|[a-zA-Z0-9_. ])+)):\s*$',
 
-        # Find all sections
-        sections = re.findall(section_pattern, cleaned_content, re.MULTILINE)
-        logger.debug(f"sections={sections}")
-        ret = {}
-        templates = {}
+
+
+        
+        capture = re.compile(r'^(?P<key>(["\'].*?["\'])|(@?(?:\\.|[a-zA-Z0-9_. ])+)):\s*$', re.MULTILINE)
+        matches = list(capture.finditer(cleaned_content))
+
+        sections = []
+
+        for i, match in enumerate(matches):
+            
+            key = match.group('key')
+            logger.error(key)
+            start = match.end()
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(cleaned_content)
+            content = cleaned_content[start:end].strip()
+            sections.append((key, content))
+
+        logger.warning(f"sections={sections}")
 
         for key, content in sections:
+
             parsing_template = False
             keys_dict = {}
-
+            logger.debug(f"parentkey={key}, content={content}")
             if key.startswith('@template'):
                 parsing_template = True
                 template_name = key.split('@template')[1].strip()
 
-                if not template_name in templates.keys():
+                if template_name not in templates.keys():
                     templates[template_name] = {}
 
             # check header key is quoted, strip quotes
@@ -39,6 +60,7 @@ class Flex():
                 quote_char = key[:1]
                 key = key.rstrip(quote_char).lstrip(quote_char)
                 keys_dict[key] = {}
+
             # check for escape char
             if r"\." in key and not keys_dict:
                 # generate keylist by replaceing escape dot with escape placeholder
@@ -51,77 +73,76 @@ class Flex():
 
             # generate dict with header subkeys ie [key1.key2.key3]
             if '.' in key and not keys_dict:
+                logger.info("created nested")
                 keylist = key.split('.')
                 keys_dict = create_nested_dict(keylist)
 
             if not keys_dict and not parsing_template:
                 keys_dict[key] = {}
 
+            
             pattern = r'^\s*\[([^\]\[\\]+)\]\s*$|^\s*([^=]+?)\s*=\s*((?:\"\"\".*?(?:\"\"\")|\[.*?\]|\S.*?)(?=\s*(?:\n\s*[^=]+\s*=|\n\s*\[|\Z)))'
             subsections = re.findall(pattern, content, re.MULTILINE | re.DOTALL)
-            logger.warning(content)
-
+            logger.error(subsections)
+            
+            # simple key=val
             if not subsections:
-                if not content:
-                    # check if its direct parent key = list
-                    pattern = r'-?\d*\.?\d+|-?\d+|[a-zA-Z]'
-                    matches = re.findall(pattern, content)
-
-                value = get_type(content.strip('\n'))
-                keys_dict[key] = value
+                logger.info("SIMPLE")
+                value = get_type(content)
+                logger.info(value)
+                logger.info(keys_dict)
+                set_last_key(keys_dict, value)
                 ret = deep_merge_pipe(ret, keys_dict)
                 continue
 
-            sub_key = None
+            logger.info(f"keysdict={keys_dict}")
+            
+
             for match in subsections:
-                if match[0]:  # section header
-                    sub_key = match[0]
-                elif match[1]:
-                    sub_key = match[1]
-                    sub_content = match[2]
 
-                    # add template data to template dict
-                    if parsing_template:
-                        templates[template_name][sub_key] = get_type(sub_content)
-                        continue
-
-                    if sub_key == "@use":
-                        use_template_name = sub_content.strip()
-
-                        if use_template_name not in templates.keys():
-                            raise Exception(f"template not found: {use_template_name}")
-
-                        if use_template_name in templates.keys():
-                            template_dict = {}
-
-                            # generate temporary template dict and merge into keys_dict
-                            if '.' in key:
-                                keylist = key.split('.')
-                                template_dict = create_nested_dict(keylist)
-                            else:
-                                template_dict[key] = {}
-
-                            for k, v in templates[use_template_name].items():
-                                add_to_last_element(keys_dict, k, v)
-                    else:
-                        value = get_type(sub_content)
-                        add_to_last_element(keys_dict, sub_key, value)
+                # direct simple list
+                if match[0]:
+                    if "," in match[0]:
+                        value = match[0].split(",")
+                        logger.debug(value)
+                        value = [get_type(x.strip()) for x in value if x]
+                        logger.info(f"direct list {value}")
+                        set_last_key(keys_dict, value)
                         ret = deep_merge_pipe(ret, keys_dict)
-
-                if "@env" in sub_content:
-                    value = get_env_var(sub_content)
+                        continue
+                subkey = match[1]
+                subval = match[2]
+                logger.info(f"subkey={subkey}, subcontent={subval}")
+                
+                if parsing_template:
+                    templates[template_name][subkey] = get_type(subval)
+                    continue
+                if subkey == "@use":
+                    use_template_name = subval.strip()
+                    if use_template_name not in templates.keys():
+                        raise Exception(f"template not found: {use_template_name}")
+                    if use_template_name in templates.keys():
+                        template_dict = {}
+                        # generate temporary template dict and merge into keys_dict
+                        if '.' in key:
+                            keylist = key.split('.')
+                            template_dict = create_nested_dict(keylist)
+                        else:
+                            template_dict[key] = {}
+                        for k, v in templates[use_template_name].items():
+                            add_to_last_element(keys_dict, k, v)
+                
+                if "@env" in subval:
+                    value = get_env_var(subval)
                 else:
-                    value = get_type(sub_content)
-                add_to_last_element(keys_dict, sub_key, value)
-                ret = deep_merge_pipe(ret, keys_dict)
+                    value = get_type(subval)
+                
+                add_to_last_element(keys_dict, subkey, value)
+                ret = deep_merge_pipe(ret,keys_dict)
 
-        # clean return dict of any @use key, values
-        ret = remove_use_keys(ret)
-
-        return ret
+        return remove_use_keys(ret)
 
     # Reading from a file
-
     def parse_file(self, file_path):
         with open(file_path, 'r') as file:
             content = file.read()

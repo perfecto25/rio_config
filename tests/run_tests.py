@@ -164,3 +164,29 @@ def test19_leading_spaces():
     assert result['test19']['first']['with spaces'] == True
     assert result['test19']['second']['with spaces'] == True
     
+def test20_simple_keyval():
+    """ parent keys with only values - no sub key"""
+    assert result['test20'] == "simple value"
+
+def test21_simple_keyval_list():
+    """ parent keys with only list values - no sub key"""
+    assert result['test21'] == ["a", "b", "c", 1000]
+
+def test22_simple_keyval_list_ML():
+    """ parent keys with only multiline list values - no sub key"""
+    assert result['test22'] == ["a", "b", "c", 1000]
+
+def test23_simple_keyval_ML_strings():
+    """ parent keys with only multiline string values - no sub key"""
+    assert result['test23'] == "simple \nmultiline \ncomment\n"
+
+def test24_values_with_colons():
+    """ test for values that have : """
+    assert result['test24'] == "this is a : value:"
+
+def test25_list_values_with_colons():
+    """ test for values that have : """
+    assert result['test25'] == ['a', 'b:', 'c:']
+
+def test26_list_values_with_colons_ML():
+    assert result['test26'] == ['a', 'b', 'c:']
