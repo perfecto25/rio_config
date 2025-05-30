@@ -131,3 +131,19 @@ def remove_use_keys(d):
     elif isinstance(d, list):
         return [remove_use_keys(item) for item in d]
     return d
+
+def set_last_key(d, value):
+    """ sets value on last key of nested dict """
+    current = d
+    parent = None
+    last_key = None
+    while current and isinstance(next(iter(current.values())), dict):
+        parent = current
+        last_key = next(iter(current.keys()))
+        current = next(iter(current.values()))
+
+    # Set the value at the last key
+    if parent is not None and last_key is not None:
+        parent[last_key] = value
+    
+    #return last_key
