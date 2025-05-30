@@ -2,10 +2,11 @@
 import re
 from loguru import logger
 from .functions import create_nested_dict, \
-    get_type, add_to_last_element, deep_merge_pipe, check_syntax, get_env_var, remove_use_keys, set_last_key
+    get_type, add_to_last_element, deep_merge_pipe, check_syntax, get_env_var, remove_use_keys, set_last_key, \
+    extract_before_comment, remove_comments
 import sys
 
-class Flex():
+class Rio():
     def parse_config(self, file_content):
         
         ret = {}
@@ -16,17 +17,6 @@ class Flex():
 
         # check for parse errors
         cleaned_content = check_syntax(cleaned_content)
-
-        # Regex to match entire sections (e.g., [key1] followed by key-value pairs)
-        #section_pattern = r'\[([^\]]+)\]\s*((?:(?!\[[^\]]*\][^=]*=).*\n*)*?)(?=\[|$|\Z)'
-        #pattern = r'^("?[^"\n]*"?):\s*((?:(?!^"?[^"\n]*"?).*\n*)*?)(?=(?:^"?[^"\n]*"?:|\Z))'
-        #section_pattern = r'^([a-zA-Z0-9_.]+):\s*$'
-        #pattern = r'^(?P<key>(["\'].*?["\'])|(@?[a-zA-Z0-9_. ]+)):\s*$'
-        #pattern = r'^(?P<key>(["\'].*?["\'])|(@?(?:\\.|[a-zA-Z0-9_. ])+)):\s*$',
-
-
-
-        
         capture = re.compile(r'^(?P<key>(["\'].*?["\'])|(@?(?:\\.|[a-zA-Z0-9_. ])+)):\s*$', re.MULTILINE)
         matches = list(capture.finditer(cleaned_content))
 
@@ -88,9 +78,13 @@ class Flex():
             # simple key=val
             if not subsections:
                 logger.info("SIMPLE")
+                logger.info(f"before xtract {content}")
+                content = remove_comments(content)
                 value = get_type(content)
                 logger.info(value)
                 logger.info(keys_dict)
+                # check for comments on lines end
+                
                 set_last_key(keys_dict, value)
                 ret = deep_merge_pipe(ret, keys_dict)
                 continue
@@ -135,7 +129,11 @@ class Flex():
                 if "@env" in subval:
                     value = get_env_var(subval)
                 else:
-                    value = get_type(subval)
+                    logger.debug(subval)
+                    value = remove_comments(subval)
+                    logger.warning(value)
+                    value = get_type(value)
+                    logger.success(value)
                 
                 add_to_last_element(keys_dict, subkey, value)
                 ret = deep_merge_pipe(ret,keys_dict)

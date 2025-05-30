@@ -5,17 +5,17 @@ import pytest
 from loguru import logger
 from os.path import dirname, join, abspath
 
-
-# import repo version of dictor, not pip-installed version
+# import repo version of Rio, not pip-installed version
 sys.path.insert(0, abspath(join(dirname(__file__), "..")))
-from flex_markup import Flex
 
-testfile = 'data.flx'
+from rio_config import Rio
 
-flex = Flex()
+testfile = 'all_tests.rio'
+
+rio = Rio()
 
 try:
-    result = flex.parse_file(testfile)
+    result = rio.parse_file(testfile)
 except Exception as error:
     raise Exception(error)
 
@@ -146,7 +146,7 @@ def test16_string_with_single_quote_troika():
 def test17_env_vars():
     """test getting env vars"""
     os.environ['PASSWORD'] = 'abc123'
-    result = flex.parse_file(testfile)
+    result = rio.parse_file(testfile)
     assert result['test17']['password'] == "abc123"
     assert result['test17']['password with fallback'] == "xyz789"
     assert result['test17']['no var'] == None
@@ -188,5 +188,14 @@ def test25_list_values_with_colons():
     """ test for values that have : """
     assert result['test25'] == ['a', 'b:', 'c:']
 
-def test26_list_values_with_colons_ML():
-    assert result['test26'] == ['a', 'b', 'c:']
+def test26_exception_unquoted_colon_ML():
+    """ unquoted strings with colons should raise an Exception """
+    with pytest.raises(Exception, match="unquoted : symbol inside an Array declaration on line >>   c:"):
+        result = rio.parse_file("test26.rio")
+
+def test27_ignore_comments():
+    """ return data without comments on end of line """
+    assert result['test27']['k1'] == "apple"
+    assert result['test27']['k2'] == "banana # is # delicious ###"
+    assert result['test27']['k3'] == "cherry ##"
+    assert result['test27a'] == "fruit"

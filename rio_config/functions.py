@@ -1,17 +1,29 @@
 import re
 import os
 
-#from loguru import logger
+from loguru import logger
 
 def check_syntax(content):
     """ parses all lines and errors out on bad syntax, removes leading spaces and tabs """
     cleaned = ""
+    bracket_start = False
     for line in content.split('\n'):
         cleaned = cleaned + line.lstrip() + '\n'
         if "@use" in line and not "=" in line:
             raise Exception(f"""
             @use declaration must be in form of '@use = MyTemplateName'
-            check for missing equal sign on this line >>> {line}""")
+            check for missing equal sign on this line >> {line} 
+            """)
+        
+        if line.startswith("[") and not line.endswith("]"):
+            bracket_start = True
+        
+        if ":" in line and bracket_start:
+            line = line.replace("'", '"')
+            if not line.startswith('"') and not line.endswith('"'):
+                raise Exception(f"unquoted : symbol inside an Array declaration on line >> {line}")
+        if not line.startswith("[") and line.endswith("]"):
+            bracket_start = False
     return cleaned
 
 def create_nested_dict(lst):
@@ -146,4 +158,31 @@ def set_last_key(d, value):
     if parent is not None and last_key is not None:
         parent[last_key] = value
     
-    #return last_key
+def extract_before_comment(line):
+    #pattern = r'^\s*(.*?)\s*(?:#.*)?$'
+    # Pattern to match quoted or unquoted string before optional comment
+    pattern = r'^\s*(?:"(.*?)"|\'(.*?)\'|([^#]*?))\s*(?:#.*)?$'
+    match = re.match(pattern, line)
+    if match:
+        logger.info(f"MATCH {match}")
+        # Return the first non-None group: double-quoted, single-quoted, or unquoted
+        return next(group for group in match.groups() if group is not None)
+    return None
+
+def remove_comments(line):
+    logger.debug(line)
+    if not line.startswith('"') and not line.endswith('"') and "#" in line:
+        logger.info("A")
+        sections = line.split("#")
+        return sections[0].strip()
+    elif line.startswith('"') and not line.endswith('"') and "#" in line:
+        logger.info("B")
+        pattern = r'^\s*"(.*?)"\s*(?:#.*)?$'
+        match = re.match(pattern, line)
+        if match:
+            return match.group(1)
+        else:
+            return line
+    else:
+        logger.info("J")
+        return line

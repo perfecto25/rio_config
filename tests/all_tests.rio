@@ -141,9 +141,10 @@ this is a : value:
 test25:
 [a, b:, c:]
 
-test26:
-[
-  a,
-  b,
-  c:
-]
+test27:
+  k1 = "apple"  # this is a comment and should be ignored
+  k2 = "banana # is # delicious ###"
+  k3 = "cherry ##"  # ignore me
+
+test27a:
+fruit # this is a comment
