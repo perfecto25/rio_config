@@ -171,10 +171,22 @@ def extract_before_comment(line):
 
 def remove_comments(line):
     logger.debug(line)
-    if not line.startswith('"') and not line.endswith('"') and "#" in line:
+
+    # unquoted string with comment at end of the line
+    if not line.startswith('[') and not line.startswith('"') and not line.endswith('"') and "#" in line:
         logger.info("A")
         sections = line.split("#")
         return sections[0].strip()
+
+    # multi line array ending bracket with comment at end
+    elif line.startswith('[') and "#" in line:
+        logger.info(f"D - {line}")
+        pattern = r'^(.*?)(?:#.*)?$'
+        match = re.match(pattern, line, re.DOTALL)
+        if match:
+            return match.group(1).rstrip()
+
+    # quoted string with comments at end of the line, only return the part thats quoted
     elif line.startswith('"') and not line.endswith('"') and "#" in line:
         logger.info("B")
         pattern = r'^\s*"(.*?)"\s*(?:#.*)?$'
@@ -184,5 +196,5 @@ def remove_comments(line):
         else:
             return line
     else:
-        logger.info("J")
+        logger.info(f"J - {line}")
         return line

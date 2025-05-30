@@ -148,3 +148,10 @@ test27:
 
 test27a:
 fruit # this is a comment
+
+test27b:
+[
+  a,
+  b,
+  c
+] # ignore this

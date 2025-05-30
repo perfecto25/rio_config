@@ -199,3 +199,4 @@ def test27_ignore_comments():
     assert result['test27']['k2'] == "banana # is # delicious ###"
     assert result['test27']['k3'] == "cherry ##"
     assert result['test27a'] == "fruit"
+    assert result['test27b'] == ['a', 'b', 'c']
