@@ -1,31 +1,6 @@
 import re
 import os
 
-from loguru import logger
-
-def check_syntax(content):
-    """ parses all lines and errors out on bad syntax, removes leading spaces and tabs """
-    cleaned = ""
-    bracket_start = False
-    for line in content.split('\n'):
-        cleaned = cleaned + line.lstrip() + '\n'
-        if "@use" in line and not "=" in line:
-            raise Exception(f"""
-            @use declaration must be in form of '@use = MyTemplateName'
-            check for missing equal sign on this line >> {line} 
-            """)
-        
-        if line.startswith("[") and not line.endswith("]"):
-            bracket_start = True
-        
-        if ":" in line and bracket_start:
-            line = line.replace("'", '"')
-            if not line.startswith('"') and not line.endswith('"'):
-                raise Exception(f"unquoted : symbol inside an Array declaration on line >> {line}")
-        if not line.startswith("[") and line.endswith("]"):
-            bracket_start = False
-    return cleaned
-
 def create_nested_dict(lst):
     if not lst:
         return {}
@@ -38,7 +13,7 @@ def get_env_var(value):
     """Replace @env ENV_VAR || 'fallback' with environment variable or fallback."""
     if not value:
         return
-    if not '@env' in value:
+    if '@env' not in value:
         return value
 
     fallback = None
@@ -67,8 +42,8 @@ def get_type(value):
 
         # if integer not quoted, turn it into int
         value = [int(x) if x.isdigit() else x for x in value]
-        value = [x.strip('"') if not type(x) is int and x.startswith('"') else x for x in value]
-        value = [x.strip("'") if not type(x) is int and x.startswith("'") else x for x in value]
+        value = [x.strip('"') if type(x) is not int and x.startswith('"') else x for x in value]
+        value = [x.strip("'") if type(x) is not int and x.startswith("'") else x for x in value]
         # remove empty elements, keep zeros
         value = [x for x in value if x is not None and x != '' and x != []]
         return value
@@ -159,28 +134,22 @@ def set_last_key(d, value):
         parent[last_key] = value
     
 def extract_before_comment(line):
-    #pattern = r'^\s*(.*?)\s*(?:#.*)?$'
     # Pattern to match quoted or unquoted string before optional comment
     pattern = r'^\s*(?:"(.*?)"|\'(.*?)\'|([^#]*?))\s*(?:#.*)?$'
     match = re.match(pattern, line)
     if match:
-        logger.info(f"MATCH {match}")
         # Return the first non-None group: double-quoted, single-quoted, or unquoted
         return next(group for group in match.groups() if group is not None)
     return None
 
 def remove_comments(line):
-    logger.debug(line)
-
     # unquoted string with comment at end of the line
     if not line.startswith('[') and not line.startswith('"') and not line.endswith('"') and "#" in line:
-        logger.info("A")
         sections = line.split("#")
         return sections[0].strip()
 
     # multi line array ending bracket with comment at end
     elif line.startswith('[') and "#" in line:
-        logger.info(f"D - {line}")
         pattern = r'^(.*?)(?:#.*)?$'
         match = re.match(pattern, line, re.DOTALL)
         if match:
@@ -188,7 +157,6 @@ def remove_comments(line):
 
     # quoted string with comments at end of the line, only return the part thats quoted
     elif line.startswith('"') and not line.endswith('"') and "#" in line:
-        logger.info("B")
         pattern = r'^\s*"(.*?)"\s*(?:#.*)?$'
         match = re.match(pattern, line)
         if match:
@@ -196,5 +164,31 @@ def remove_comments(line):
         else:
             return line
     else:
-        logger.info(f"J - {line}")
         return line
+
+def check_syntax(content):
+    """ parses all lines and errors out on bad syntax, removes leading spaces and tabs """
+    cleaned = ""
+    bracket_start = False
+    for line in content.split('\n'):
+        cleaned = cleaned + line.lstrip() + '\n'
+        if "@use" in line and "=" not in line:
+            raise Exception(f"""
+            @use declaration must be in form of '@use = MyTemplateName'
+            check for missing equal sign on this line >> {line} 
+            """)
+        
+        if "#" in line:
+            line = remove_comments(line)
+
+        if line.startswith("[") and not line.endswith("]"):
+            bracket_start = True
+        if not line.startswith("[") and line.endswith("]"):
+            bracket_start = False
+
+        if ":" in line and bracket_start:
+            line = line.replace("'", '"')
+            if not line.startswith('"') and not line.endswith('"'):
+                raise Exception(f"unquoted : symbol inside an Array declaration on line >> {line}")
+
+    return cleaned

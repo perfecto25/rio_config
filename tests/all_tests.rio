@@ -108,7 +108,7 @@ password2 = @env PASSWORD2 ||   Spaceball#1
 test18:
 drink = "=perri air"
 
-     test19.first:
+          test19.first:
      with spaces = true
 
      test19.second:
@@ -141,17 +141,25 @@ this is a : value:
 test25:
 [a, b:, c:]
 
-test27:
+test26:
   k1 = "apple"  # this is a comment and should be ignored
   k2 = "banana # is # delicious ###"
   k3 = "cherry ##"  # ignore me
 
-test27a:
+test26a:
 fruit # this is a comment
 
-test27b:
+test26b:
 [
   a,
   b,
   c
 ] # ignore this
+
+test27:
+planet.name = "mars"
+planet.size = "200km"
+planet.color = "red"
+planet.size.miles = 500
+planet.size.km = 200
+"key1.key2" = "fake subkey"

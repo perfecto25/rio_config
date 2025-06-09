@@ -14,13 +14,21 @@ testfile = 'all_tests.rio'
 
 rio = Rio()
 
+def test0_exception_unquoted_colon_ML():
+    """ unquoted strings with colons should raise an Exception """
+    with pytest.raises(Exception, match="unquoted : symbol inside an Array declaration on line >>   c:"):
+        result = rio.parse_file("test26.rio")
+
+
+
+
+
 try:
     result = rio.parse_file(testfile)
 except Exception as error:
     raise Exception(error)
 
 logger.warning(result)
-
 
 def test1_basic_key_value():
     """test for basic string return on a section key = value"""
@@ -188,15 +196,19 @@ def test25_list_values_with_colons():
     """ test for values that have : """
     assert result['test25'] == ['a', 'b:', 'c:']
 
-def test26_exception_unquoted_colon_ML():
-    """ unquoted strings with colons should raise an Exception """
-    with pytest.raises(Exception, match="unquoted : symbol inside an Array declaration on line >>   c:"):
-        result = rio.parse_file("test26.rio")
-
-def test27_ignore_comments():
+def test26_ignore_comments():
     """ return data without comments on end of line """
-    assert result['test27']['k1'] == "apple"
-    assert result['test27']['k2'] == "banana # is # delicious ###"
-    assert result['test27']['k3'] == "cherry ##"
-    assert result['test27a'] == "fruit"
-    assert result['test27b'] == ['a', 'b', 'c']
+    assert result['test26']['k1'] == "apple"
+    assert result['test26']['k2'] == "banana # is # delicious ###"
+    assert result['test26']['k3'] == "cherry ##"
+    assert result['test26a'] == "fruit"
+    assert result['test26b'] == ['a', 'b', 'c']
+
+def test27_nested_child_subkeys():
+    """ parse child subkeys with dots """
+    assert result['test27']['planet']['name'] == "mars"
+    assert result['test27']['planet']['color'] == "red"
+    assert result['test27']['planet']['size']['miles'] == 500
+    assert result['test27']['planet']['size']['km'] == 200
+    assert result['test27']['key1.key2'] == "fake subkey"
+

@@ -62,7 +62,7 @@ double quoting non numeric values is recommended to avoid ambiguous value declar
 
 To create a deep hash structure, add a key block declaration of all top keys and a final value, separated by a dot
 
-Flex will create all parent subkeys along the path
+Rio will create all parent subkeys along the path
 
     first.second.third:
       fourth = value
@@ -176,6 +176,41 @@ result
         "c"
       ]
     }
+
+
+---
+
+### Child nested subkeys
+
+With Rio you can also create nested subkeys underneath your parent key, by placing a dot in the subkey declaration
+
+    config.nginx:
+      cache.size = 200
+      cache.limit = 190
+      cache.clean.size = 5
+
+result 
+
+    {
+      "config": {
+        "nginx": {
+          "cache": {
+            "size": 200,
+            "limit": 190,
+            "clean": {
+              "size": 5
+            }
+          }
+        }
+      }
+    }
+
+To treat a child subkey with dots a single key, wrap it in quotes
+
+    config.nginx:
+      cache.size = 200
+      cache.limit = 190
+      "cache.clean.size" = 5
 
 
 ---
@@ -439,7 +474,11 @@ Comments are not processed during final output
 pip install pytest
 
 shell> cd tests
-shell> pytest -sv tests/run_tests.py
+
+shell> pytest -sv run_tests.py
+
+
+---
 
 ## TO DO:
 

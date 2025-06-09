@@ -1,7 +1,14 @@
 test27b:
-[[sss
+[
   a,
   b,
   c
-  dd
-]] # ignore this
+] # ignore this
+
+test27:
+planet.name = "mars"
+planet.size = "200km"
+planet.color = "red"
+planet.size.miles = 500
+planet.size.km = 200
+"key1.key2" = "fake subkey"
