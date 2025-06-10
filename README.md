@@ -219,7 +219,7 @@ result
       }
     }
 
-To treat a child subkey with dots a single key, wrap it in quotes
+To treat a child subkey with dots as a single key, wrap it in quotes
 
     config.nginx:
       cache.size = 200
@@ -495,13 +495,10 @@ shell> pytest -sv run_tests.py
 ---
 
 ### Packaging
-    pip install --upgrade pip setuptools wheel build twine
-    python -m build
-
-    
-    python setup.py sdist
-    sudo pip install twine
-    sudo twine upload dist/*
+    python3 -m pip install --upgrade pip setuptools wheel build twine
+    python3 -m build
+    python3 -m pip install twine
+    python3 -m twine upload dist/*
 
 ## TO DO:
 
