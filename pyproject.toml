@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rio_config"
+version = "0.1.0"
+authors = [{name = "Mike Reider", email = "mike.reider@gmail.com"}]
+description = "Rio configuration parser"
+readme = "README.md"
+requires-python = ">=3.6"
+license =  {text = "MIT"}
+keywords = ["rio_config"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[tool.setuptools]
+py-modules = []
+
+[project.urls]
+Homepage = "https://github.com/perfecto25/rio_config"
