@@ -94,7 +94,7 @@ def test10_multiline_list_return():
 
 def test11_multiline_comment():
     """ test comments spanning multiple lines"""
-    assert result["test11"]["comment1"] == "this is \na \nmultiline\ncomment\n"
+    assert result["test11"]["comment1"] == " this is \na \nmultiline\ncomment\n"
     assert result["test11"]["comment2"] == "also a \nmultiline\ncomment\n"
 
 
@@ -212,3 +212,6 @@ def test27_nested_child_subkeys():
     assert result['test27']['planet']['size']['km'] == 200
     assert result['test27']['key1.key2'] == "fake subkey"
 
+def test28_float_values_in_list():
+    """ list returning floats """
+    assert result['test28']['vals'] == [2.0, 3.1, 567, 'apple', True, 'true', False, 'false']

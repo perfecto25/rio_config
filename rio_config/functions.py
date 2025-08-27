@@ -1,5 +1,6 @@
 import re
 import os
+# from loguru import logger 
 
 def create_nested_dict(lst):
     if not lst:
@@ -31,45 +32,45 @@ def get_env_var(value):
     return val
 
 def get_type(value):
-    """checks if an integer, string, bool"""
+    """ checks if an integer, string, bool, float """
+    
     if not value:
         return
 
-    # List
+    value = value.rstrip().lstrip() 
+    
+    ## list
     if value.startswith('[') and value.endswith(']') and ',' in value:
         value = value.strip("[").strip("]").strip()
-        value = ''.join(value.split()).split(',')
-
-        # if integer not quoted, turn it into int
-        value = [int(x) if x.isdigit() else x for x in value]
-        value = [x.strip('"') if type(x) is not int and x.startswith('"') else x for x in value]
-        value = [x.strip("'") if type(x) is not int and x.startswith("'") else x for x in value]
-        # remove empty elements, keep zeros
-        value = [x for x in value if x is not None and x != '' and x != []]
+        value = [get_type(x) for x in value.split(',')]
         return value
 
-    # String
-    if value.startswith('"') or value.startswith("'"):
-        value = str(value).rstrip('"').rstrip("'").lstrip('"').lstrip("' ")
+    ## bool
+    elif value in ["true", "True", "false", "False"]:
+        value = value.lower() == "true"
         return value
 
-    # Integer
-    try:
-        value = int(value)
-        return value
-    except (TypeError, ValueError):
-        pass
-
-    # Boolean
-    if value in ["true", "True"]:
-        return True
-    if value in ["false", "False"]:
-        return False
-
-    # Float
-    if re.match(r'^-?\d+\.\d+$', value):
+    ## float
+    elif re.match(r'^-?\d+\.\d+$', value):
         return float(value)
+
+    ## string
+    elif value.startswith('"') or value.startswith("'"):
+        value = value.strip('\"')
+        value = value.strip("\'")
+        return value
+    
+    ## int
+    else:
+        try:
+            value = value.rstrip().lstrip()
+            value = int(value)
+            return value
+        except (TypeError, ValueError):
+            pass
+
     return value
+
 
 
 def deep_merge_pipe(dict1, dict2):

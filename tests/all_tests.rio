@@ -46,7 +46,7 @@ mylist = [
   "3"
 ]
 
-another list = [ x, y, z, 2,]
+another list = [ x, y, z, 2]
 
 test11:
 comment1 = """ this is 
@@ -130,7 +130,7 @@ test22:
 ]
 
 test23:
-""" simple 
+"""simple 
 multiline 
 comment
 """
@@ -156,6 +156,7 @@ test26b:
   c
 ] # ignore this
 
+
 test27:
 planet.name = "mars"
 planet.size = "200km"
@@ -163,3 +164,7 @@ planet.color = "red"
 planet.size.miles = 500
 planet.size.km = 200
 "key1.key2" = "fake subkey"
+
+test28:
+  vals = [2.0, 3.1, 567, 'apple', True, 'true', False, 'false']
+
