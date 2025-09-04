@@ -214,4 +214,4 @@ def test27_nested_child_subkeys():
 
 def test28_float_values_in_list():
     """ list returning floats """
-    assert result['test28']['vals'] == [2.0, 3.1, 567, 'apple', True, 'true', False, 'false']
+    assert result['test28']['vals'] == [2.0, 3.1, 567, 'apple', True, 'true', False, 'false', '256']

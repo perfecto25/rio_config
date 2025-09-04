@@ -166,5 +166,5 @@ planet.size.km = 200
 "key1.key2" = "fake subkey"
 
 test28:
-  vals = [2.0, 3.1, 567, 'apple', True, 'true', False, 'false']
+  vals = [2.0, 3.1, 567, 'apple', True, 'true', False, 'false', '256']
 
